@@ -1,6 +1,6 @@
 /** @jsxImportSource react */
 import { useState, useMemo } from "react";
-import { Card, CardContent } from "./ui/card";   // go up 1 level from SkillTree.jsx
+import { Card, CardContent } from "./ui/card";
 import { motion } from "framer-motion";
 
 // ---- Skill data ----
@@ -37,30 +37,6 @@ const skillData = [
 // pre-compute tier list for layout
 const tiers = [...new Set(skillData.map((s) => s.tier))].sort((a, b) => a - b);
 
-const skillIcons = {
-  grip: "✊",
-  knifeTypes: "🔪",
-  sharpen: "🗡️",
-  speed: "⚡",
-  slice: "🥩",
-  peel: "🥔",
-  coins: "🪙",
-  baton: "🥖",
-  chop: "🔪",
-  diceLarge: "🍲",
-  core: "🌰",
-  deboning: "🐟",
-  diceMedium: "🍚",
-  batonnet: "🥒",
-  filleting: "🐟",
-  diceSmall: "🥕",
-  julienne: "🥗",
-  pinBoning: "🪝",
-  mince: "🍖",
-  fineJulienne: "🍜",
-  chiffonade: "🥬",
-  brunoise: "🍥",
-};
 
 function SkillNode({ skill, points, canClick, onClick }) {
   const pct = points / skill.max;
@@ -82,7 +58,6 @@ function SkillNode({ skill, points, canClick, onClick }) {
         className={`w-24 h-24 rounded-full border-2 shadow-md flex flex-col items-center justify-center transition ${colorClasses}`}
       >
         <CardContent className="flex flex-col items-center justify-center p-0 gap-1">
-          <span className="text-xl">{skillIcons[skill.id] || "⭐"}</span>
           <span className="font-semibold text-sm leading-none">{skill.name}</span>
           <span className="text-xs">{points}/{skill.max}</span>
         </CardContent>
