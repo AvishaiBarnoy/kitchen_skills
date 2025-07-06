@@ -1,6 +1,6 @@
 /** @jsxImportSource react */
 import { useState, useMemo } from "react";
-import { Card, CardContent } from "./ui/card";
+import { Card, CardContent } from "./ui/card";   // go up 1 level from SkillTree.jsx
 import { motion } from "framer-motion";
 
 // ---- Skill data ----
@@ -37,28 +37,29 @@ const skillData = [
 // pre-compute tier list for layout
 const tiers = [...new Set(skillData.map((s) => s.tier))].sort((a, b) => a - b);
 
-
 function SkillNode({ skill, points, canClick, onClick }) {
   const pct = points / skill.max;
   const locked = !canClick;
-
-  const colorClasses = locked
-    ? "bg-gray-700 border-gray-600 text-gray-400"
-    : pct === 1
-    ? "bg-green-700 border-green-500 text-white"
-    : "bg-gray-800 border-gray-500 text-white";
 
   return (
     <motion.div
       whileHover={{ scale: canClick ? 1.05 : 1 }}
       onClick={() => canClick && onClick(skill.id)}
-      className={locked ? "pointer-events-none select-none opacity-50" : "cursor-pointer"}
+      className={
+        locked ? "pointer-events-none select-none opacity-40" : "cursor-pointer"
+      }
     >
       <Card
-        className={`w-24 h-24 rounded-full border-2 shadow-md flex flex-col items-center justify-center transition ${colorClasses}`}
+        className={`w-40 h-24 flex flex-col items-center justify-center rounded-2xl shadow transition ${
+          locked
+            ? "bg-gray-300"
+            : pct === 1
+            ? "bg-green-200"
+            : "bg-sky-100"
+        }`}
       >
-        <CardContent className="flex flex-col items-center justify-center p-0 gap-1">
-          <span className="font-semibold text-sm leading-none">{skill.name}</span>
+        <CardContent className="flex flex-col items-center justify-center p-2">
+          <span className="font-semibold text-sm">{skill.name}</span>
           <span className="text-xs">{points}/{skill.max}</span>
         </CardContent>
       </Card>
