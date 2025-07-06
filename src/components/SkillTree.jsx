@@ -1,5 +1,5 @@
 /** @jsxImportSource react */
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useLayoutEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent } from './ui/card';
 
@@ -37,7 +37,7 @@ const skillData = [
 // pre-compute tier list for layout
 const tiers = [...new Set(skillData.map((s) => s.tier))].sort((a, b) => a - b);
 
-function SkillNode({ skill, points, canClick, onClick }) {
+function SkillNode({ skill, points, canClick, onClick, innerRef }) {
   const pct = points / skill.max;
   const locked = !canClick;
 
@@ -49,9 +49,14 @@ function SkillNode({ skill, points, canClick, onClick }) {
 
   return (
     <motion.div
+      ref={innerRef}
       whileHover={{ scale: canClick ? 1.05 : 1 }}
       onClick={() => canClick && onClick(skill.id)}
-      className={locked ? 'pointer-events-none select-none opacity-50' : 'cursor-pointer'}
+      className={
+        locked
+          ? 'pointer-events-none select-none opacity-50 relative z-10'
+          : 'cursor-pointer relative z-10'
+      }
     >
       <Card
         className={`w-24 h-24 rounded-full border-2 shadow-md flex flex-col items-center justify-center transition ${colorClasses}`}
@@ -69,6 +74,9 @@ function SkillNode({ skill, points, canClick, onClick }) {
 
 export default function SkillTree() {
   const [points, setPoints] = useState(() => Object.fromEntries(skillData.map((s) => [s.id, 0])));
+  const containerRef = useRef(null);
+  const nodeRefs = useRef({});
+  const [positions, setPositions] = useState({});
 
   // a skill is unlocked if every prerequisite has ≥1 point
   const canClick = useMemo(() => {
@@ -87,8 +95,57 @@ export default function SkillTree() {
     });
   };
 
+  useLayoutEffect(() => {
+    const update = () => {
+      if (!containerRef.current) return;
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const newPos = {};
+      for (const [id, el] of Object.entries(nodeRefs.current)) {
+        if (el) {
+          const r = el.getBoundingClientRect();
+          newPos[id] = {
+            x: r.left - containerRect.left + r.width / 2,
+            y: r.top - containerRect.top + r.height / 2,
+          };
+        }
+      }
+      setPositions(newPos);
+    };
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, [points]);
+
+  const lines = useMemo(() => {
+    const arr = [];
+    for (const skill of skillData) {
+      for (const pre of skill.prereq) {
+        arr.push({ from: pre, to: skill.id });
+      }
+    }
+    return arr;
+  }, []);
+
   return (
-    <div className="p-8 space-y-8">
+    <div ref={containerRef} className="relative p-8 space-y-8">
+      <svg className="absolute top-0 left-0 w-full h-full pointer-events-none">
+        {lines.map(({ from, to }) => {
+          const a = positions[from];
+          const b = positions[to];
+          if (!a || !b) return null;
+          return (
+            <line
+              key={`${from}-${to}`}
+              x1={a.x}
+              y1={a.y}
+              x2={b.x}
+              y2={b.y}
+              stroke="#555"
+              strokeWidth="2"
+            />
+          );
+        })}
+      </svg>
       <h1 className="text-3xl font-bold text-center">Knife-Skill Tree</h1>
       {tiers.map((tier) => (
         <div key={tier} className="flex justify-center gap-4 flex-wrap">
@@ -101,6 +158,9 @@ export default function SkillTree() {
                 points={points[skill.id]}
                 canClick={canClick[skill.id]}
                 onClick={addPoint}
+                innerRef={(el) => {
+                  nodeRefs.current[skill.id] = el;
+                }}
               />
             ))}
         </div>
