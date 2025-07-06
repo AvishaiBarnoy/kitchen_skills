@@ -1,0 +1,37 @@
+{
+  "extends": ["airbnb", "airbnb/hooks", "plugin:prettier/recommended"],
+  "plugins": ["react", "react-hooks"],
+  "env": { "browser": true, "es2022": true },
+  "parserOptions": { "sourceType": "module", "ecmaFeatures": { "jsx": true } },
+
+  "settings": {
+    "react": { "version": "detect" },
+
+    // 👇 add the node resolver and keep alias
+    "import/resolver": {
+      "alias": {
+        "map": [["@", "./src"]],
+        "extensions": [".js", ".jsx"]
+      },
+      "node": {
+        "extensions": [".js", ".jsx"]
+      }
+    }
+  },
+
+  "rules": {
+      "react/jsx-filename-extension": [1, { "extensions": [".jsx"] }],
+      "react/react-in-jsx-scope": "off",
+
+      "react/prop-types": "off",               // skip prop-types until you add them
+      "react/jsx-props-no-spreading": "off",   // allow ...props on shadcn Card
+      "no-nested-ternary": "off",
+      "no-restricted-syntax": "off",
+      "import/extensions": [
+        "error",
+        "ignorePackages",
+        { "js": "never", "jsx": "never" }
+      ]
+  }
+}
+
