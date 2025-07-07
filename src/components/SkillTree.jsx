@@ -1,7 +1,6 @@
 /** @jsxImportSource react */
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
 
 const pathColors = {
   vegetable: "bg-emerald-800/80",
@@ -53,6 +52,9 @@ const skillData = [
   { id: "channel", name: "Channel Cuts", max: 1, tier: 5, prereq: [{ id: "peel", points: 1 }], path: "decorative", description: "Striped peel patterns using a channel knife." },
   { id: "twist", name: "Citrus Twist", max: 1, tier: 5, prereq: [{ id: "peel", points: 1 }], path: "decorative", description: "Spiral garnish from citrus peel, often for drinks." },
 ];
+
+const paths = Array.from(new Set(skillData.map((s) => s.path)));
+const maxTier = Math.max(...skillData.map((s) => s.tier));
 export default function SkillTree() {
   const [points, setPoints] = useState(() => Object.fromEntries(skillData.map((s) => [s.id, 0])));
   const [highlightPaths, setHighlightPaths] = useState([]);
@@ -86,6 +88,22 @@ export default function SkillTree() {
     );
   };
 
+  const cell = 120;
+  const positions = useMemo(() => {
+    const out = {};
+    for (const s of skillData) {
+      const col = paths.indexOf(s.path);
+      const row = s.tier;
+      out[s.id] = {
+        x: col * cell + cell / 2,
+        y: row * cell + cell / 2,
+        col,
+        row,
+      };
+    }
+    return out;
+  }, []);
+
   return (
     <div className="relative p-6">
       <div className="flex justify-between items-center mb-4">
@@ -113,50 +131,75 @@ export default function SkillTree() {
         ))}
       </div>
 
-      {Array.from(new Set(skillData.map((s) => s.tier))).sort((a, b) => a - b).map((tier) => (
-        <div key={tier} className="flex flex-wrap gap-3 mb-6">
-          {skillData.filter((s) => s.tier === tier).map((skill) => {
-            const isUnlocked = unlocked[skill.id];
-            const bgClass = isUnlocked
-              ? highlightPaths.length > 0 && !highlightPaths.includes(skill.path)
-                ? "bg-gray-200"
-                : pathColors[skill.path] || pathColors.default
-              : "bg-gray-300";
-            const textClass = isUnlocked && !(highlightPaths.length > 0 && !highlightPaths.includes(skill.path))
-              ? "text-yellow-100"
-              : "text-black";
-            return (
-              <motion.div
-                key={skill.id}
-                whileHover={{ scale: 1.05 }}
+      <div
+        className="relative mx-auto"
+        style={{ width: paths.length * cell, height: (maxTier + 1) * cell }}
+      >
+        <svg className="absolute inset-0 pointer-events-none" strokeWidth="2">
+          {skillData.map((skill) =>
+            skill.prereq.map((p) => {
+              const from = positions[p.id];
+              const to = positions[skill.id];
+              if (!from || !to) return null;
+              return (
+                <line
+                  key={`${skill.id}-${p.id}`}
+                  x1={from.x}
+                  y1={from.y}
+                  x2={to.x}
+                  y2={to.y}
+                  stroke="#fde68a"
+                />
+              );
+            })
+          )}
+        </svg>
+        {skillData.map((skill) => {
+          const pos = positions[skill.id];
+          const isUnlocked = unlocked[skill.id];
+          const bgClass = isUnlocked
+            ? highlightPaths.length > 0 && !highlightPaths.includes(skill.path)
+              ? "bg-gray-200"
+              : pathColors[skill.path] || pathColors.default
+            : "bg-gray-300";
+          const textClass = isUnlocked && !(highlightPaths.length > 0 && !highlightPaths.includes(skill.path))
+            ? "text-yellow-100"
+            : "text-black";
+          return (
+            <motion.div
+              key={skill.id}
+              whileHover={{ scale: 1.05 }}
+              className="absolute group"
+              style={{ left: pos.x, top: pos.y, transform: 'translate(-50%, -50%)' }}
+            >
+              <div
                 onClick={() => isUnlocked && addPoint(skill.id)}
                 onContextMenu={(e) => {
                   e.preventDefault();
                   subtractPoint(skill.id);
                 }}
-                className={`w-44 h-32 p-2 rounded-lg shadow-xl cursor-pointer relative border-2 border-amber-700 ${bgClass} ${textClass} font-fantasy`}
+                className={`w-24 h-24 rounded-full flex flex-col items-center justify-center shadow-xl border-2 border-amber-700 cursor-pointer font-fantasy ${bgClass} ${textClass}`}
               >
-                <div className="text-center font-semibold text-sm">{skill.name}</div>
-                <div className="text-center text-xs">{points[skill.id]} / {skill.max}</div>
-                <div className="absolute bottom-1 left-1 right-1 text-[10px] text-center italic truncate">
-                  {skill.description || ""}
-                </div>
-                {points[skill.id] > 0 && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      subtractPoint(skill.id);
-                    }}
-                    className="absolute top-1 right-1 text-xs bg-white border border-gray-500 rounded px-1 hover:bg-gray-100"
-                  >
-                    –
-                  </button>
+                <div className="text-sm font-semibold text-center px-1">{skill.name}</div>
+                <div className="text-xs">{points[skill.id]} / {skill.max}</div>
+              </div>
+              <div className="absolute left-1/2 -translate-x-1/2 -translate-y-full mt-2 hidden group-hover:block bg-black text-yellow-100 text-xs p-2 rounded w-40 z-10">
+                <div className="font-semibold mb-1">{skill.name}</div>
+                <div>{skill.description}</div>
+                <div className="mt-1">Points: {points[skill.id]} / {skill.max}</div>
+                {skill.prereq.length > 0 && (
+                  <div className="mt-1 italic">
+                    Requires {skill.prereq.map((p, i) => {
+                      const reqName = skillData.find((s) => s.id === p.id)?.name || p.id;
+                      return `${reqName} (${p.points})${i < skill.prereq.length - 1 ? ', ' : ''}`;
+                    })}
+                  </div>
                 )}
-              </motion.div>
-            );
-          })}
-        </div>
-      ))}
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
     </div>
   );
 }
