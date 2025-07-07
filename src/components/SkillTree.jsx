@@ -184,9 +184,8 @@ export default function SkillTree() {
             ? "text-yellow-100"
             : "text-black";
           return (
-            <motion.div
+            <div
               key={skill.id}
-              whileHover={{ scale: 1.0 }}
               className="absolute group"
               style={{ left: pos.x, top: pos.y, transform: 'translate(-50%, -50%)' }}
             >
@@ -214,7 +213,7 @@ export default function SkillTree() {
                   </div>
                 )}
               </div>
-            </motion.div>
+            </div>
           );
         })}
       </div>
