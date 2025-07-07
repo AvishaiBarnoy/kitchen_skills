@@ -6,8 +6,11 @@ export default {
     "./src/**/*.{js,jsx,ts,tsx}"
   ],
   theme: {
-  	extend: {
-  		borderRadius: {
+        extend: {
+                fontFamily: {
+                        fantasy: ['"Cinzel"', 'serif'],
+                },
+                borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'
