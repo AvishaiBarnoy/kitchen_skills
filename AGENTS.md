@@ -1,19 +1,19 @@
 # AGENTS Development Guide
 
-This repository simulates membranes and surfaces using Python. The code is
-organized under `geometry/`, `modules/`, `runtime/` and other directories.
+This project is a small React application that implements an RPG-style skill
+tree for learning kitchen techniques. Source files live under `src/` and are
+organized into components and helper modules. Styling is handled with Tailwind
+CSS and utility functions in `src/lib`.
 
 ## Coding Guidelines
-- Document public functions with standard docstrings.
-- Prioritize efficient algorithms and data structures.
+- Use functional React components and hooks.
+- Follow the existing ESLint and Prettier configuration (`npm run lint`).
+- Import modules using the `@/` alias defined in `vite.config.js`.
 
-## Testing
-- Install dependencies with `pip install -r requirements.txt`.
-- Run tests from the repository root using `pytest -q`.
-- Ensure all tests pass before committing any changes.
-- When adding new functionality, include relevant unit tests.
-- When editing existing code, verify that tests cover the change. Add tests if
-  they are missing.
+## Development
+- Install dependencies with `npm install`.
+- Start a local server with `npm run dev` and rebuild with `npm run build`.
+- Run `npm run lint` before committing to ensure consistent code style.
 
 ## Pull Requests
 - Summarize your changes clearly in commit messages and PR descriptions.
