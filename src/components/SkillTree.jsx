@@ -88,7 +88,7 @@ export default function SkillTree() {
     );
   };
 
-  const cell = 140; // Increased from 120 to provide more space
+  const cell = 160; // Increased for better spacing
   const positions = useMemo(() => {
     const groups = {};
     for (const s of skillData) {
@@ -103,8 +103,13 @@ export default function SkillTree() {
     for (const [key, ids] of Object.entries(groups)) {
       const [row, col] = key.split("-").map(Number);
       ids.forEach((id, index) => {
-        // Increased offset from 40 to 110 to prevent overlap (circles are 96px wide)
-        const offset = (index - (ids.length - 1) / 2) * 110;
+        // Use adaptive spacing based on number of items and tier
+        let spacing = 120; // Base spacing for circles (96px wide + 24px gap)
+        if (row === 5 && ids.length > 3) {
+          // Extra spacing for crowded tier 5
+          spacing = 130;
+        }
+        const offset = (index - (ids.length - 1) / 2) * spacing;
         out[id] = {
           x: col * cell + cell / 2 + offset,
           y: row * cell + cell / 2,
@@ -145,8 +150,12 @@ export default function SkillTree() {
       </div>
 
       <div
-        className="relative mx-auto"
-        style={{ width: paths.length * cell, height: (maxTier + 1) * cell }}
+        className="relative mx-auto overflow-visible"
+        style={{ 
+          width: Math.max(paths.length * cell, 1200), // Ensure minimum width for wide layouts
+          height: (maxTier + 1) * cell + 100, // Extra height for tier 5 spacing
+          minHeight: 800
+        }}
       >
         <svg
           className="absolute inset-0 pointer-events-none"
@@ -195,12 +204,16 @@ export default function SkillTree() {
                   e.preventDefault();
                   subtractPoint(skill.id);
                 }}
-                className={`w-24 h-24 rounded-full flex flex-col items-center justify-center shadow-xl border-2 border-amber-700 cursor-pointer font-fantasy ${bgClass} ${textClass}`}
+                className={`w-24 h-24 rounded-full flex flex-col items-center justify-center shadow-xl border-2 border-amber-700 cursor-pointer font-fantasy ${bgClass} ${textClass} select-none`}
               >
-                <div className="text-sm font-semibold text-center px-1">{skill.name}</div>
-                <div className="text-xs">{points[skill.id]} / {skill.max}</div>
+                <div className="text-xs font-semibold text-center px-1 leading-tight">{skill.name}</div>
+                <div className="text-xs mt-1">{points[skill.id]} / {skill.max}</div>
               </div>
-              <div className="absolute left-full top-1/2 ml-2 -translate-y-1/2 hidden group-hover:block bg-black text-yellow-100 text-xs p-2 rounded w-40 z-10">
+              <div className={`absolute top-1/2 -translate-y-1/2 hidden group-hover:block bg-black text-yellow-100 text-xs p-2 rounded w-48 z-50 shadow-lg border border-yellow-600 ${
+                pos.col >= paths.length / 2 
+                  ? 'right-full mr-2' // Show tooltip on left side for right-side circles
+                  : 'left-full ml-2'  // Show tooltip on right side for left-side circles
+              }`}>
                 <div className="font-semibold mb-1">{skill.name}</div>
                 <div>{skill.description}</div>
                 <div className="mt-1">Points: {points[skill.id]} / {skill.max}</div>
