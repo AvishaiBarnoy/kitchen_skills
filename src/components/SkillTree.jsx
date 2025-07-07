@@ -1,168 +1,153 @@
 /** @jsxImportSource react */
-import { useState, useMemo, useRef, useLayoutEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Card, CardContent } from './ui/card';
+import { useState, useMemo } from "react";
+import { motion } from "framer-motion";
+import { Card, CardContent } from "@/components/ui/card";
 
-// ---- Skill data ----
+const pathColors = {
+  vegetable: "bg-lime-100",
+  decorative: "bg-pink-100",
+  protein: "bg-red-100",
+  pastry: "bg-yellow-100",
+  meta: "bg-slate-100",
+  basic: "bg-sky-100",
+  default: "bg-white",
+};
+
+const allPaths = Object.keys(pathColors);
+
 const skillData = [
-  { id: 'grip', name: 'Grip', max: 3, tier: 0, prereq: [] },
-  { id: 'knifeTypes', name: 'Knife Types', max: 3, tier: 0, prereq: [] },
-  { id: 'sharpen', name: 'Sharpen', max: 3, tier: 0, prereq: [] },
-  { id: 'speed', name: 'Speed', max: 5, tier: 0, prereq: ['grip'] },
-
-  { id: 'slice', name: 'Slice', max: 3, tier: 1, prereq: [] },
-  { id: 'peel', name: 'Peel', max: 1, tier: 1, prereq: [] },
-  { id: 'coins', name: 'Coins', max: 1, tier: 1, prereq: ['slice'] },
-  { id: 'baton', name: 'Baton', max: 1, tier: 1, prereq: ['slice'] },
-
-  { id: 'chop', name: 'Chop', max: 2, tier: 2, prereq: ['slice', 'grip'] },
-  { id: 'diceLarge', name: 'Dice Large', max: 1, tier: 2, prereq: ['slice', 'grip'] },
-  { id: 'core', name: 'Core', max: 1, tier: 2, prereq: ['peel', 'grip'] },
-  { id: 'deboning', name: 'Deboning', max: 2, tier: 2, prereq: ['knifeTypes', 'grip'] },
-
-  { id: 'diceMedium', name: 'Dice Medium', max: 1, tier: 3, prereq: ['diceLarge', 'grip'] },
-  { id: 'batonnet', name: 'Batonnet', max: 1, tier: 3, prereq: ['baton', 'grip'] },
-  { id: 'filleting', name: 'Filleting', max: 2, tier: 3, prereq: ['deboning', 'grip'] },
-
-  { id: 'diceSmall', name: 'Dice Small', max: 1, tier: 4, prereq: ['diceMedium', 'grip'] },
-  { id: 'julienne', name: 'Julienne', max: 2, tier: 4, prereq: ['batonnet', 'grip'] },
-  { id: 'pinBoning', name: 'Pin Boning', max: 1, tier: 4, prereq: ['filleting', 'grip'] },
-
-  { id: 'mince', name: 'Mince', max: 1, tier: 5, prereq: ['diceSmall', 'chop', 'grip'] },
-  { id: 'fineJulienne', name: 'Fine Julienne', max: 1, tier: 5, prereq: ['julienne', 'grip'] },
-  { id: 'chiffonade', name: 'Chiffonade', max: 1, tier: 5, prereq: ['julienne', 'grip'] },
-  { id: 'brunoise', name: 'Brunoise', max: 1, tier: 5, prereq: ['julienne', 'diceSmall', 'grip'] },
+  { id: "grip", name: "Grip", max: 3, tier: 0, prereq: [], path: "meta", description: "Fundamental skill to hold the knife safely with a pinch grip for control and power." },
+  { id: "knifeTypes", name: "Knife Types", max: 3, tier: 0, prereq: [], path: "meta", description: "Identify, handle, and select different types of knives (chef's, boning, paring, serrated, etc.)." },
+  { id: "sharpen", name: "Sharpen", max: 3, tier: 0, prereq: [], path: "meta", description: "Learn honing and sharpening using rods, stones, and pull-through sharpeners." },
+  { id: "speed", name: "Speed", max: 5, tier: 0, prereq: [{ id: "grip", points: 1 }], path: "meta", description: "Develop rhythm, efficiency, and safe fast movement through repetitive tasks." },
+  { id: "slice", name: "Slice", max: 3, tier: 1, prereq: [], path: "basic", description: "Basic push-pull cut for consistent thickness across ingredients." },
+  { id: "peel", name: "Peel", max: 1, tier: 1, prereq: [], path: "basic", description: "Use a paring knife or peeler for fruit and vegetable skin removal." },
+  { id: "coins", name: "Coins", max: 1, tier: 1, prereq: [{ id: "slice", points: 1 }], path: "basic", description: "Even circular slices from cylindrical items like cucumbers or carrots." },
+  { id: "baton", name: "Baton", max: 1, tier: 1, prereq: [{ id: "slice", points: 1 }], path: "basic", description: "Thick rectangular sticks (e.g. for crudités)." },
+  { id: "chop", name: "Chop", max: 2, tier: 2, prereq: [{ id: "slice", points: 1 }], path: "basic", description: "Rapid downward cut, often for herbs and vegetables." },
+  { id: "diceLarge", name: "Dice Large", max: 1, tier: 2, prereq: [{ id: "slice", points: 1 }], path: "vegetable", description: "Cut into large uniform cubes (typically ~20 mm)." },
+  { id: "core", name: "Core", max: 1, tier: 2, prereq: [{ id: "peel", points: 1 }], path: "vegetable", description: "Remove seeds, stems, or internal cores of fruits and vegetables." },
+  { id: "deboning", name: "Deboning", max: 2, tier: 2, prereq: [{ id: "knifeTypes", points: 1 }], path: "protein", description: "Extract bones cleanly from meat, fish, and poultry." },
+  { id: "diceMedium", name: "Dice Medium", max: 1, tier: 3, prereq: [{ id: "diceLarge", points: 1 }], path: "vegetable", description: "Cut into medium cubes (~12 mm)." },
+  { id: "batonnet", name: "Batonnet", max: 1, tier: 3, prereq: [{ id: "baton", points: 1 }], path: "vegetable", description: "Medium rectangular sticks (6 mm x 6 mm x 5 cm)." },
+  { id: "filleting", name: "Filleting", max: 2, tier: 3, prereq: [{ id: "deboning", points: 1 }], path: "protein", description: "Separate meat or fish from bones with precision." },
+  { id: "oblique", name: "Oblique/Roll-Cut", max: 1, tier: 3, prereq: [{ id: "coins", points: 1 }], path: "vegetable", description: "Cut on alternating angles for decorative irregular wedges." },
+  { id: "diceSmall", name: "Dice Small", max: 1, tier: 4, prereq: [{ id: "diceMedium", points: 1 }], path: "vegetable", description: "Small uniform cubes (~6 mm), often for mirepoix." },
+  { id: "julienne", name: "Julienne", max: 2, tier: 4, prereq: [{ id: "batonnet", points: 1 }], path: "vegetable", description: "Thin matchstick cuts (3 mm x 3 mm x 5 cm)." },
+  { id: "pinBoning", name: "Pin Boning", max: 1, tier: 4, prereq: [{ id: "filleting", points: 1 }], path: "protein", description: "Remove tiny bones left in fillets using tweezers or fingers." },
+  { id: "tourné", name: "Tourné", max: 1, tier: 4, prereq: [{ id: "oblique", points: 1 }], path: "vegetable", description: "Football-shaped cut with 7 sides, often for presentation." },
+  { id: "paysanne", name: "Paysanne", max: 1, tier: 4, prereq: [{ id: "diceMedium", points: 1 }], path: "vegetable", description: "Thin square, triangle, or round slices for quick cooking." },
+  { id: "mince", name: "Mince", max: 1, tier: 5, prereq: [{ id: "diceSmall", points: 1 }, { id: "chop", points: 1 }], path: "basic", description: "Very fine chopping into small particles (e.g. garlic)." },
+  { id: "fineJulienne", name: "Fine Julienne", max: 1, tier: 5, prereq: [{ id: "julienne", points: 1 }], path: "vegetable", description: "Ultra-thin matchsticks (~1 mm wide)." },
+  { id: "chiffonade", name: "Chiffonade", max: 1, tier: 5, prereq: [{ id: "julienne", points: 2 }], path: "vegetable", description: "Ribbon-like strips of leafy herbs or greens." },
+  { id: "brunoise", name: "Brunoise", max: 1, tier: 5, prereq: [{ id: "julienne", points: 1 }, { id: "diceSmall", points: 1 }], path: "vegetable", description: "1–2 mm precision cubes, often derived from julienne." },
+  { id: "scoring", name: "Scoring Dough", max: 1, tier: 5, prereq: [{ id: "slice", points: 1 }], path: "pastry", description: "Slash dough to control expansion during baking." },
+  { id: "supreme", name: "Supreme Segments", max: 1, tier: 5, prereq: [{ id: "peel", points: 1 }], path: "vegetable", description: "Segment citrus cleanly, removing all membranes." },
+  { id: "butterfly", name: "Butterfly Cut", max: 1, tier: 5, prereq: [{ id: "filleting", points: 1 }], path: "protein", description: "Slice meat or fish almost in half and open it like a book." },
+  { id: "spatchcock", name: "Spatchcock", max: 1, tier: 5, prereq: [{ id: "deboning", points: 1 }], path: "protein", description: "Split and flatten poultry for even grilling or roasting." },
+  { id: "frenching", name: "Frenching Bones", max: 1, tier: 5, prereq: [{ id: "deboning", points: 1 }], path: "protein", description: "Scrape meat from bones for a clean presentation." },
+  { id: "trimming", name: "Trimming Fat/Skin", max: 1, tier: 5, prereq: [{ id: "deboning", points: 1 }], path: "protein", description: "Remove excess fat or connective tissue from meats." },
+  { id: "bias", name: "Bias Slice", max: 1, tier: 5, prereq: [{ id: "slice", points: 1 }], path: "pastry", description: "Angled slicing for larger surface area and elegant shape." },
+  { id: "scalloping", name: "Scalloping", max: 1, tier: 5, prereq: [{ id: "slice", points: 1 }], path: "pastry", description: "Wavy decorative cuts along the edge of dough or fruit." },
+  { id: "fluting", name: "Fluting Mushrooms", max: 1, tier: 5, prereq: [{ id: "peel", points: 1 }], path: "decorative", description: "Decorative grooves cut into mushroom caps." },
+  { id: "channel", name: "Channel Cuts", max: 1, tier: 5, prereq: [{ id: "peel", points: 1 }], path: "decorative", description: "Striped peel patterns using a channel knife." },
+  { id: "twist", name: "Citrus Twist", max: 1, tier: 5, prereq: [{ id: "peel", points: 1 }], path: "decorative", description: "Spiral garnish from citrus peel, often for drinks." },
 ];
-
-// pre-compute tier list for layout
-const tiers = [...new Set(skillData.map((s) => s.tier))].sort((a, b) => a - b);
-
-function SkillNode({ skill, points, canClick, onClick, innerRef }) {
-  const pct = points / skill.max;
-  const locked = !canClick;
-
-  const colorClasses = locked
-    ? 'bg-gray-700 border-gray-600 text-gray-400'
-    : pct === 1
-      ? 'bg-green-700 border-green-500 text-white'
-      : 'bg-gray-800 border-gray-500 text-white';
-
-  return (
-    <motion.div
-      ref={innerRef}
-      whileHover={{ scale: canClick ? 1.05 : 1 }}
-      onClick={() => canClick && onClick(skill.id)}
-      className={
-        locked
-          ? 'pointer-events-none select-none opacity-50 relative z-10'
-          : 'cursor-pointer relative z-10'
-      }
-    >
-      <Card
-        className={`w-24 h-24 rounded-full border-2 shadow-md flex flex-col items-center justify-center transition ${colorClasses}`}
-      >
-        <CardContent className="flex flex-col items-center justify-center p-0 gap-1">
-          <span className="font-semibold text-sm leading-none">{skill.name}</span>
-          <span className="text-xs">
-            {points}/{skill.max}
-          </span>
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
-}
-
 export default function SkillTree() {
   const [points, setPoints] = useState(() => Object.fromEntries(skillData.map((s) => [s.id, 0])));
-  const containerRef = useRef(null);
-  const nodeRefs = useRef({});
-  const [positions, setPositions] = useState({});
+  const [highlightPaths, setHighlightPaths] = useState([]);
 
-  // a skill is unlocked if every prerequisite has ≥1 point
-  const canClick = useMemo(() => {
+  const unlocked = useMemo(() => {
     const out = {};
     for (const s of skillData) {
-      out[s.id] = s.prereq.every((p) => points[p] > 0);
+      out[s.id] = s.prereq.every((p) => points[p.id] >= p.points);
     }
     return out;
   }, [points]);
 
   const addPoint = (id) => {
-    setPoints((prev) => {
-      const skill = skillData.find((s) => s.id === id);
-      if (!skill || prev[id] >= skill.max) return prev;
-      return { ...prev, [id]: prev[id] + 1 };
-    });
+    const skill = skillData.find((s) => s.id === id);
+    if (!skill || points[id] >= skill.max) return;
+    setPoints((prev) => ({ ...prev, [id]: prev[id] + 1 }));
   };
 
-  useLayoutEffect(() => {
-    const update = () => {
-      if (!containerRef.current) return;
-      const containerRect = containerRef.current.getBoundingClientRect();
-      const newPos = {};
-      for (const [id, el] of Object.entries(nodeRefs.current)) {
-        if (el) {
-          const r = el.getBoundingClientRect();
-          newPos[id] = {
-            x: r.left - containerRect.left + r.width / 2,
-            y: r.top - containerRect.top + r.height / 2,
-          };
-        }
-      }
-      setPositions(newPos);
-    };
-    update();
-    window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
-  }, [points]);
+  const subtractPoint = (id) => {
+    if (points[id] <= 0) return;
+    setPoints((prev) => ({ ...prev, [id]: prev[id] - 1 }));
+  };
 
-  const lines = useMemo(() => {
-    const arr = [];
-    for (const skill of skillData) {
-      for (const pre of skill.prereq) {
-        arr.push({ from: pre, to: skill.id });
-      }
-    }
-    return arr;
-  }, []);
+  const resetTree = () => {
+    setPoints(Object.fromEntries(skillData.map((s) => [s.id, 0])));
+  };
+
+  const toggleHighlightPath = (path) => {
+    setHighlightPaths((prev) =>
+      prev.includes(path) ? prev.filter((p) => p !== path) : [...prev, path]
+    );
+  };
 
   return (
-    <div ref={containerRef} className="relative p-8 space-y-8">
-      <svg className="absolute top-0 left-0 w-full h-full pointer-events-none">
-        {lines.map(({ from, to }) => {
-          const a = positions[from];
-          const b = positions[to];
-          if (!a || !b) return null;
-          return (
-            <line
-              key={`${from}-${to}`}
-              x1={a.x}
-              y1={a.y}
-              x2={b.x}
-              y2={b.y}
-              stroke="#555"
-              strokeWidth="2"
-            />
-          );
-        })}
-      </svg>
-      <h1 className="text-3xl font-bold text-center">Knife-Skill Tree</h1>
-      {tiers.map((tier) => (
-        <div key={tier} className="flex justify-center gap-4 flex-wrap">
-          {skillData
-            .filter((s) => s.tier === tier)
-            .map((skill) => (
-              <SkillNode
+    <div className="relative p-6">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-3xl font-bold">Knife Skill Tree</h1>
+        <div className="flex gap-2">
+          <button onClick={resetTree} className="px-3 py-1 rounded bg-red-200 hover:bg-red-300">
+            Reset
+          </button>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2 mb-6">
+        {allPaths.map((path) => (
+          <button
+            key={path}
+            className={`px-2 py-1 text-sm rounded border ${highlightPaths.includes(path) ? "bg-opacity-90 border-black" : "bg-opacity-30"} ${pathColors[path]}`}
+            onClick={() => toggleHighlightPath(path)}
+          >
+            {path.charAt(0).toUpperCase() + path.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      {Array.from(new Set(skillData.map((s) => s.tier))).sort((a, b) => a - b).map((tier) => (
+        <div key={tier} className="flex flex-wrap gap-3 mb-6">
+          {skillData.filter((s) => s.tier === tier).map((skill) => {
+            const isUnlocked = unlocked[skill.id];
+            const color = isUnlocked
+              ? highlightPaths.length > 0 && !highlightPaths.includes(skill.path)
+                ? "bg-gray-200"
+                : pathColors[skill.path] || pathColors.default
+              : "bg-gray-300";
+            return (
+              <motion.div
                 key={skill.id}
-                skill={skill}
-                points={points[skill.id]}
-                canClick={canClick[skill.id]}
-                onClick={addPoint}
-                innerRef={(el) => {
-                  nodeRefs.current[skill.id] = el;
+                whileHover={{ scale: 1.05 }}
+                onClick={() => isUnlocked && addPoint(skill.id)}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  subtractPoint(skill.id);
                 }}
-              />
-            ))}
+                className={`w-44 h-32 p-2 rounded-lg shadow cursor-pointer relative ${color}`}
+              >
+                <div className="text-center font-semibold text-sm text-black">{skill.name}</div>
+                <div className="text-center text-xs text-black">{points[skill.id]} / {skill.max}</div>
+                <div className="absolute bottom-1 left-1 right-1 text-[10px] text-center italic truncate text-black">
+                  {skill.description || ""}
+                </div>
+                {points[skill.id] > 0 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      subtractPoint(skill.id);
+                    }}
+                    className="absolute top-1 right-1 text-xs bg-white border border-gray-500 rounded px-1 hover:bg-gray-100"
+                  >
+                    –
+                  </button>
+                )}
+              </motion.div>
+            );
+          })}
         </div>
       ))}
     </div>
