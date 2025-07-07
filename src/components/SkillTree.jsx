@@ -88,7 +88,7 @@ export default function SkillTree() {
     );
   };
 
-  const cell = 120;
+  const cell = 140; // Increased from 120 to provide more space
   const positions = useMemo(() => {
     const groups = {};
     for (const s of skillData) {
@@ -103,7 +103,8 @@ export default function SkillTree() {
     for (const [key, ids] of Object.entries(groups)) {
       const [row, col] = key.split("-").map(Number);
       ids.forEach((id, index) => {
-        const offset = (index - (ids.length - 1) / 2) * 40;
+        // Increased offset from 40 to 110 to prevent overlap (circles are 96px wide)
+        const offset = (index - (ids.length - 1) / 2) * 110;
         out[id] = {
           x: col * cell + cell / 2 + offset,
           y: row * cell + cell / 2,
