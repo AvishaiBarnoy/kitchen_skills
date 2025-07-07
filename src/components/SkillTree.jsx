@@ -4,13 +4,13 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 
 const pathColors = {
-  vegetable: "bg-lime-100",
-  decorative: "bg-pink-100",
-  protein: "bg-red-100",
-  pastry: "bg-yellow-100",
-  meta: "bg-slate-100",
-  basic: "bg-sky-100",
-  default: "bg-white",
+  vegetable: "bg-emerald-800/80",
+  decorative: "bg-pink-800/80",
+  protein: "bg-red-800/80",
+  pastry: "bg-yellow-700/80",
+  meta: "bg-gray-700/80",
+  basic: "bg-sky-800/80",
+  default: "bg-purple-800/80",
 };
 
 const allPaths = Object.keys(pathColors);
@@ -89,9 +89,9 @@ export default function SkillTree() {
   return (
     <div className="relative p-6">
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-3xl font-bold">Knife Skill Tree</h1>
+        <h1 className="text-3xl font-bold text-amber-300 drop-shadow-lg font-fantasy">Knife Skill Tree</h1>
         <div className="flex gap-2">
-          <button onClick={resetTree} className="px-3 py-1 rounded bg-red-200 hover:bg-red-300">
+          <button onClick={resetTree} className="px-3 py-1 rounded bg-red-200 hover:bg-red-300 font-fantasy">
             Reset
           </button>
         </div>
@@ -101,7 +101,11 @@ export default function SkillTree() {
         {allPaths.map((path) => (
           <button
             key={path}
-            className={`px-2 py-1 text-sm rounded border ${highlightPaths.includes(path) ? "bg-opacity-90 border-black" : "bg-opacity-30"} ${pathColors[path]}`}
+            className={`px-2 py-1 text-sm rounded border-2 font-fantasy ${
+              highlightPaths.includes(path)
+                ? "bg-amber-800 text-yellow-200 border-yellow-400"
+                : "bg-amber-900/50 text-yellow-100 border-yellow-700"
+            } ${pathColors[path]}`}
             onClick={() => toggleHighlightPath(path)}
           >
             {path.charAt(0).toUpperCase() + path.slice(1)}
@@ -113,11 +117,14 @@ export default function SkillTree() {
         <div key={tier} className="flex flex-wrap gap-3 mb-6">
           {skillData.filter((s) => s.tier === tier).map((skill) => {
             const isUnlocked = unlocked[skill.id];
-            const color = isUnlocked
+            const bgClass = isUnlocked
               ? highlightPaths.length > 0 && !highlightPaths.includes(skill.path)
                 ? "bg-gray-200"
                 : pathColors[skill.path] || pathColors.default
               : "bg-gray-300";
+            const textClass = isUnlocked && !(highlightPaths.length > 0 && !highlightPaths.includes(skill.path))
+              ? "text-yellow-100"
+              : "text-black";
             return (
               <motion.div
                 key={skill.id}
@@ -127,11 +134,11 @@ export default function SkillTree() {
                   e.preventDefault();
                   subtractPoint(skill.id);
                 }}
-                className={`w-44 h-32 p-2 rounded-lg shadow cursor-pointer relative ${color}`}
+                className={`w-44 h-32 p-2 rounded-lg shadow-xl cursor-pointer relative border-2 border-amber-700 ${bgClass} ${textClass} font-fantasy`}
               >
-                <div className="text-center font-semibold text-sm text-black">{skill.name}</div>
-                <div className="text-center text-xs text-black">{points[skill.id]} / {skill.max}</div>
-                <div className="absolute bottom-1 left-1 right-1 text-[10px] text-center italic truncate text-black">
+                <div className="text-center font-semibold text-sm">{skill.name}</div>
+                <div className="text-center text-xs">{points[skill.id]} / {skill.max}</div>
+                <div className="absolute bottom-1 left-1 right-1 text-[10px] text-center italic truncate">
                   {skill.description || ""}
                 </div>
                 {points[skill.id] > 0 && (
