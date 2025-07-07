@@ -105,17 +105,18 @@ export default function SkillTree() {
   }, []);
 
   return (
-    <div className="relative p-6">
-      <div className="flex justify-between items-center mb-4">
+    <div className="relative p-6 flex flex-col items-center">
+      <div className="flex flex-col items-center gap-2 mb-4">
         <h1 className="text-3xl font-bold text-amber-300 drop-shadow-lg font-fantasy">Knife Skill Tree</h1>
-        <div className="flex gap-2">
-          <button onClick={resetTree} className="px-3 py-1 rounded bg-red-200 hover:bg-red-300 font-fantasy">
-            Reset
-          </button>
-        </div>
+        <button
+          onClick={resetTree}
+          className="px-3 py-1 rounded bg-red-200 hover:bg-red-300 font-fantasy"
+        >
+          Reset
+        </button>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-6">
+      <div className="flex flex-wrap justify-center gap-2 mb-6">
         {allPaths.map((path) => (
           <button
             key={path}
@@ -135,7 +136,12 @@ export default function SkillTree() {
         className="relative mx-auto"
         style={{ width: paths.length * cell, height: (maxTier + 1) * cell }}
       >
-        <svg className="absolute inset-0 pointer-events-none" strokeWidth="2">
+        <svg
+          className="absolute inset-0 pointer-events-none"
+          width="100%"
+          height="100%"
+          strokeWidth="2"
+        >
           {skillData.map((skill) =>
             skill.prereq.map((p) => {
               const from = positions[p.id];
