@@ -122,7 +122,7 @@ export default function SkillTree() {
         <h1 className="text-3xl font-bold text-amber-300 drop-shadow-lg font-fantasy">Knife Skill Tree</h1>
         <button
           onClick={resetTree}
-          className="px-3 py-1 rounded bg-red-200 hover:bg-red-300 font-fantasy"
+          className="px-3 py-1 rounded bg-red-200 hover:bg-red-300 text-red-900 hover:text-red-950 font-fantasy"
         >
           Reset
         </button>
@@ -186,7 +186,7 @@ export default function SkillTree() {
           return (
             <motion.div
               key={skill.id}
-              whileHover={{ scale: 1.05 }}
+              whileHover={{ scale: 1.0 }}
               className="absolute group"
               style={{ left: pos.x, top: pos.y, transform: 'translate(-50%, -50%)' }}
             >
