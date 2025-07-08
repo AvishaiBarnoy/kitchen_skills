@@ -10,6 +10,7 @@ implemented.
 3. quarter slice (req: coins)
 
 ### general things to add
+1. dependencies should be graph-like dependent
 
 ## Some Sources
 1. https://blog.culinaryartscurriculum.com/knife-skills/
