@@ -87,40 +87,69 @@ export default function SkillTree() {
     );
   };
 
-  const cell = 120;
+  const circleSize = 96; // w-24 h-24 = 24 * 4px
+  const minGap = 20; // Minimum gap between circles
+  const cellY = 140; // Vertical spacing between tiers
+  
   const positions = useMemo(() => {
-    const groups = {};
-    for (const s of skillData) {
-      const col = paths.indexOf(s.path);
-      const row = s.tier;
-      const key = `${row}-${col}`;
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(s.id);
+    // First, group skills by tier and path
+    const tierGroups = {};
+    for (let tier = 0; tier <= maxTier; tier++) {
+      tierGroups[tier] = skillData.filter(s => s.tier === tier);
     }
-
+    
     const out = {};
-    for (const [key, ids] of Object.entries(groups)) {
-      const [row, col] = key.split("-").map(Number);
-      ids.forEach((id, index) => {
-        const offset = (index - (ids.length - 1) / 2) * 40;
-        out[id] = {
-          x: col * cell + cell / 2 + offset,
-          y: row * cell + cell / 2,
-          col,
-          row,
-        };
+    let maxWidth = 0;
+    
+    // Position skills tier by tier
+    Object.entries(tierGroups).forEach(([tier, skills]) => {
+      let currentX = 100; // Start with padding
+      
+      // Group by path within each tier
+      const pathGroups = {};
+      skills.forEach(skill => {
+        if (!pathGroups[skill.path]) pathGroups[skill.path] = [];
+        pathGroups[skill.path].push(skill);
       });
-    }
-    return out;
+      
+      // Position each path group
+      paths.forEach(path => {
+        const pathSkills = pathGroups[path] || [];
+        if (pathSkills.length === 0) return;
+        
+        // Calculate total width needed for this path group
+        const groupWidth = pathSkills.length * circleSize + (pathSkills.length - 1) * minGap;
+        
+        // Position each skill in the group
+        pathSkills.forEach((skill, index) => {
+          const x = currentX + index * (circleSize + minGap) + circleSize / 2;
+          const y = parseInt(tier) * cellY + cellY / 2;
+          
+          out[skill.id] = {
+            x,
+            y,
+            col: paths.indexOf(path),
+            row: parseInt(tier),
+          };
+        });
+        
+        // Move to next group position
+        currentX += groupWidth + 80; // 80px gap between path groups
+      });
+      
+      maxWidth = Math.max(maxWidth, currentX);
+    });
+    
+    return { positions: out, maxWidth };
   }, []);
 
   return (
-    <div className="relative p-6 flex flex-col items-center">
+    <div className="relative p-6 flex flex-col items-center overflow-x-auto w-full">
       <div className="flex flex-col items-center gap-2 mb-4">
         <h1 className="text-3xl font-bold text-amber-300 drop-shadow-lg font-fantasy">Knife Skill Tree</h1>
         <button
           onClick={resetTree}
-          className="px-3 py-1 rounded bg-red-200 hover:bg-red-300 font-fantasy"
+          className="px-3 py-1 rounded bg-red-200 hover:bg-red-300 text-red-900 hover:text-red-950 font-fantasy"
         >
           Reset
         </button>
@@ -143,19 +172,25 @@ export default function SkillTree() {
       </div>
 
       <div
-        className="relative mx-auto"
-        style={{ width: paths.length * cell, height: (maxTier + 1) * cell }}
+        className="relative mx-auto overflow-visible"
+        style={{ 
+          width: positions.maxWidth + 100, // Use calculated max width
+          height: (maxTier + 1) * cellY + 100, // Use cellY for height
+          minHeight: 800
+        }}
       >
         <svg
           className="absolute inset-0 pointer-events-none"
-          width="100%"
-          height="100%"
+          style={{ 
+            width: positions.maxWidth + 100,
+            height: (maxTier + 1) * cellY + 100
+          }}
           strokeWidth="2"
         >
           {skillData.map((skill) =>
             skill.prereq.map((p) => {
-              const from = positions[p.id];
-              const to = positions[skill.id];
+              const from = positions.positions[p.id];
+              const to = positions.positions[skill.id];
               if (!from || !to) return null;
               return (
                 <line
@@ -171,7 +206,7 @@ export default function SkillTree() {
           )}
         </svg>
         {skillData.map((skill) => {
-          const pos = positions[skill.id];
+          const pos = positions.positions[skill.id];
           const isUnlocked = unlocked[skill.id];
           const bgClass = isUnlocked
             ? highlightPaths.length > 0 && !highlightPaths.includes(skill.path)
@@ -182,9 +217,8 @@ export default function SkillTree() {
             ? "text-yellow-100"
             : "text-black";
           return (
-            <motion.div
+            <div
               key={skill.id}
-              whileHover={{ scale: 1.05 }}
               className="absolute group"
               style={{ left: pos.x, top: pos.y, transform: 'translate(-50%, -50%)' }}
             >
@@ -194,12 +228,16 @@ export default function SkillTree() {
                   e.preventDefault();
                   subtractPoint(skill.id);
                 }}
-                className={`w-24 h-24 rounded-full flex flex-col items-center justify-center shadow-xl border-2 border-amber-700 cursor-pointer font-fantasy ${bgClass} ${textClass}`}
+                className={`w-24 h-24 rounded-full flex flex-col items-center justify-center shadow-xl border-2 border-amber-700 cursor-pointer font-fantasy ${bgClass} ${textClass} select-none`}
               >
-                <div className="text-sm font-semibold text-center px-1">{skill.name}</div>
-                <div className="text-xs">{points[skill.id]} / {skill.max}</div>
+                <div className="text-xs font-semibold text-center px-1 leading-tight">{skill.name}</div>
+                <div className="text-xs mt-1">{points[skill.id]} / {skill.max}</div>
               </div>
-              <div className="absolute left-full top-1/2 ml-2 -translate-y-1/2 hidden group-hover:block bg-black text-yellow-100 text-xs p-2 rounded w-40 z-10">
+              <div className={`absolute top-1/2 -translate-y-1/2 hidden group-hover:block bg-black text-yellow-100 text-xs p-2 rounded w-48 z-50 shadow-lg border border-yellow-600 ${
+                pos.col >= paths.length / 2 
+                  ? 'right-full mr-2' // Show tooltip on left side for right-side circles
+                  : 'left-full ml-2'  // Show tooltip on right side for left-side circles
+              }`}>
                 <div className="font-semibold mb-1">{skill.name}</div>
                 <div>{skill.description}</div>
                 <div className="mt-1">Points: {points[skill.id]} / {skill.max}</div>
@@ -212,7 +250,7 @@ export default function SkillTree() {
                   </div>
                 )}
               </div>
-            </motion.div>
+            </div>
           );
         })}
       </div>
