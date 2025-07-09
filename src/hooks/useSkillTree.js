@@ -1,15 +1,68 @@
-import { useState, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { fullSkillsData, compactSkillData } from "../data/skills";
+import { computeUnlocks } from "../lib/utils";
 
 export default function useSkillTree() {
   const [compactMode, setCompactMode] = useState(false);
+  const [points, setPoints] = useState({});
+  const [highlightPaths, setHighlightPaths] = useState([]);
+
   const skills = compactMode ? compactSkillData : fullSkillsData;
 
-  const [points, setPoints] = useState(() =>
-    Object.fromEntries(skills.map((s) => [s.id, 0]))
-  );
+  const canAddPoint = (id) => {
+    const skill = skills.find((s) => s.id === id);
+    if (!skill) return false;
 
-  const [highlightPaths, setHighlightPaths] = useState([]);
+    const current = points[id] || 0;
+    if (current >= skill.max) return false;
+
+    const prereqs = skill.prereq || []; // default to empty array
+    return prereqs.every(
+      (req) => (points[req.id] || 0) >= req.points
+    );
+  };
+
+  const addPoint = (id) => {
+    const skill = skills.find((s) => s.id === id);
+    const max = skill?.max ?? Infinity;
+
+    if (!canAddPoint(id)) return;
+
+    setPoints((prev) => {
+      const current = prev[id] || 0;
+      if (current >= max) return prev;
+      return {
+        ...prev,
+        [id]: current + 1,
+      };
+    });
+  };
+
+  const subtractPoint = (id) => {
+    setPoints((prev) => ({
+      ...prev,
+      [id]: Math.max(0, (prev[id] || 0) - 1),
+    }));
+  };
+
+  const resetTree = () => {
+    setPoints({});
+  };
+
+  const toggleCompactMode = () => {
+    setCompactMode((prev) => !prev);
+  };
+
+  const toggleHighlightPath = (path) => {
+    setHighlightPaths((prev) =>
+      prev.includes(path)
+        ? prev.filter((p) => p !== path)
+        : [...prev, path]
+    );
+  };
+
+  //const unlocked = computeUnlocks(skills, points);
+  const unlocked = useMemo(() => computeUnlocks(skills, points), [points, skills])
 
   // Ensure every skill gets a valid point value (prevents NaN)
   const safePoints = useMemo(() => {
@@ -19,42 +72,6 @@ export default function useSkillTree() {
     }
     return result;
   }, [points, skills]);
-
-  const unlocked = useMemo(() => {
-    const result = {};
-    for (const skill of skills) {
-      result[skill.id] = skill.prereq.every((p) => safePoints[p.id] >= p.points);
-    }
-    return result;
-  }, [safePoints, skills]);
-
-  const addPoint = (id) => {
-    const skill = skills.find((s) => s.id === id);
-    if (!skill || safePoints[id] >= skill.max) return;
-    setPoints((prev) => ({ ...prev, [id]: prev[id] + 1 }));
-  };
-
-  const subtractPoint = (id) => {
-    if (!points[id] || points[id] <= 0) return;
-    setPoints((prev) => ({ ...prev, [id]: prev[id] - 1 }));
-  };
-
-  const resetTree = () => {
-    setPoints(Object.fromEntries(skills.map((s) => [s.id, 0])));
-  };
-
-  const toggleHighlightPath = (path) => {
-    setHighlightPaths((prev) =>
-      prev.includes(path) ? prev.filter((p) => p !== path) : [...prev, path]
-    );
-  };
-
-  const toggleCompactMode = () => {
-    const newMode = !compactMode;
-    const newSkills = newMode ? compactSkillData : fullSkillsData;
-    setCompactMode(newMode);
-    setPoints(Object.fromEntries(newSkills.map((s) => [s.id, 0])));
-  };
 
   return {
     compactMode,
@@ -67,6 +84,7 @@ export default function useSkillTree() {
     resetTree,
     highlightPaths,
     toggleHighlightPath,
+    canAddPoint,
   };
 }
 

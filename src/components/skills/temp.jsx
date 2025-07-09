@@ -16,15 +16,12 @@ export default function SkillNode({
 
   const canAdd = typeof canAddPoint === "function" ? canAddPoint(skill.id) : true;
 
+  // Determine tooltip content
   let tooltipContent = "";
   if (!canAdd) {
-    tooltipContent =
-      "Requires: " +
-      skill.prereq.map((req) => `${req.points} pts in "${req.id}"`).join(", ");
+    tooltipContent = `Requires: ` + skill.prereq.map(req => `${req.points} pts in "${req.id}"`).join(", ");
   } else if (isUnlocked && skill.prereq.length > 0) {
-    tooltipContent =
-      "Prerequisites: " +
-      skill.prereq.map((req) => `${req.points} pts in "${req.id}"`).join(", ");
+    tooltipContent = `Prerequisites: ` + skill.prereq.map(req => `${req.points} pts in "${req.id}"`).join(", ");
   }
 
   const baseColor = isUnlocked

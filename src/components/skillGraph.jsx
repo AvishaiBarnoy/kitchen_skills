@@ -1,6 +1,7 @@
 /** @jsxImportSource react */
+import { useMemo } from "react";
 import useSkillTree from "../hooks/useSkillTree";
-import { pathColors, allPaths } from "../data/paths";
+import { allPaths } from "../data/paths";
 import SkillNode from "./skills/SkillNode";
 import PathLegend from "./skills/PathLegend";
 
@@ -12,11 +13,10 @@ export default function SkillTree() {
     safePoints,
     unlocked,
     addPoint,
-    canAddPoint,
+    subtractPoint,
     resetTree,
     highlightPaths,
     toggleHighlightPath,
-    subtractPoint,
   } = useSkillTree();
 
   return (
@@ -39,22 +39,21 @@ export default function SkillTree() {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-6">
-        {allPaths.map((path) => (
-          <button
-            key={path}
-            className={`px-2 py-1 text-xs rounded border ${highlightPaths.includes(path) ? "bg-opacity-90 border-white" : "bg-opacity-30 border-gray-500"} ${pathColors[path]}`}
-            onClick={() => toggleHighlightPath(path)}
-          >
-            {path.charAt(0).toUpperCase() + path.slice(1)}
-          </button>
-        ))}
-      </div>
+      <PathLegend
+        allPaths={allPaths}
+        highlightPaths={highlightPaths}
+        toggleHighlightPath={toggleHighlightPath}
+      />
 
-      <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))" }}>
+      <div
+        className="grid gap-4"
+        style={{ gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))" }}
+      >
         {skills.map((skill) => {
+          if (!skill) return null;
           const isUnlocked = unlocked[skill.id];
-          const isDimmed = highlightPaths.length > 0 && !highlightPaths.includes(skill.path);
+          const isDimmed =
+            highlightPaths.length > 0 && !highlightPaths.includes(skill.path);
 
           return (
             <SkillNode
@@ -65,7 +64,6 @@ export default function SkillTree() {
               isDimmed={isDimmed}
               addPoint={addPoint}
               subtractPoint={subtractPoint}
-              canAddPoint={canAddPoint}
             />
           );
         })}
