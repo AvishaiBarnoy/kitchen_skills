@@ -1,0 +1,20 @@
+src/
+├── components/
+│   ├── skills/               # Skill tree specific components
+│   ├── layout/               # Shared layout (e.g., navbar, sidebar)
+│   ├── ui/                   # Shared UI primitives (buttons, modals, tooltips)
+│   └── pages/                # Page-level components (e.g., SkillPage, HomePage)
+├── data/
+│   ├── skills/               # Multiple trees: knife, pastry, etc.
+│   └── users.js              # Demo user data (future: connect to backend)
+├── hooks/
+│   ├── useSkillTree.js
+│   └── useUserProgress.js    # Track per-user skill state
+├── lib/
+│   ├── utils.js
+│   └── skillGraph.js         # Graph traversal, unlocking logic
+├── styles/
+│   └── tailwind.config.js
+├── routes.jsx                # Route definitions for React Router
+└── main.jsx
+
