@@ -83,5 +83,5 @@ An interactive skill-tracking and learning platform for cooking techniques. Desi
 
 ---
 
-*Created by [Your Name] — follow the journey as we turn cooking into an adventure.*
+*Created by Avishai Barnoy — follow the journey as we turn cooking into an adventure.*
 
