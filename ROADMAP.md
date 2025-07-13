@@ -9,7 +9,7 @@ An interactive skill-tracking and learning platform for cooking techniques. Desi
 
 - [x] Modularize components (hooks, UI, logic).
 - [x] Implement graph-based prerequisite handling.
-- [ ] Add unit tests for core logic (`useSkillTree`, `computeUnlocks`, etc).
+- [x] Add unit tests for core logic (`useSkillTree`, `computeUnlocks`, etc).
 - [ ] Introduce global state manager (e.g., Zustand or Redux) if needed.
 - [ ] Clean up styles and remove redundant props and state.
 
