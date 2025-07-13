@@ -2,6 +2,19 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import useSkillTree from '../useSkillTree'
 
+// Mock localStorage to prevent persistence during tests
+const mockLocalStorage = {
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
+}
+
+Object.defineProperty(window, 'localStorage', {
+  value: mockLocalStorage,
+  writable: true,
+});
+
 // Mock the skills data
 vi.mock('../../data/skills', () => ({
   fullSkillsData: [
@@ -16,6 +29,12 @@ vi.mock('../../data/skills', () => ({
 }))
 
 describe('useSkillTree', () => {
+  beforeEach(() => {
+    // Reset localStorage mock before each test
+    vi.clearAllMocks()
+    mockLocalStorage.getItem.mockReturnValue(null)
+  })
+
   it('should initialize with correct default values', () => {
     const { result } = renderHook(() => useSkillTree())
     
