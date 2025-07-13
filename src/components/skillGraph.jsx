@@ -38,26 +38,45 @@ export default function SkillTree() {
   // Modal and notification state
   const [showAchievementsModal, setShowAchievementsModal] = useState(false);
   const [currentNotification, setCurrentNotification] = useState(null);
+  const [notificationQueue, setNotificationQueue] = useState([]);
 
   // Handle newly unlocked achievements
   useEffect(() => {
-    if (newlyUnlocked.length > 0 && !currentNotification) {
-      // Show first achievement notification
-      setCurrentNotification(newlyUnlocked[0]);
+    if (newlyUnlocked.length > 0) {
+      // Add new achievements to the queue (avoid duplicates)
+      setNotificationQueue(prev => {
+        const newQueue = [...prev];
+        newlyUnlocked.forEach(achievement => {
+          if (!newQueue.find(item => item.id === achievement.id)) {
+            newQueue.push(achievement);
+          }
+        });
+        return newQueue;
+      });
+      
+      // Clear the newly unlocked from the hook
+      clearNewlyUnlocked();
     }
-  }, [newlyUnlocked, currentNotification]);
+  }, [newlyUnlocked, clearNewlyUnlocked]);
+
+  // Show notifications from the queue
+  useEffect(() => {
+    if (notificationQueue.length > 0 && !currentNotification) {
+      setCurrentNotification(notificationQueue[0]);
+    }
+  }, [notificationQueue, currentNotification]);
 
   const handleNotificationDismiss = () => {
     setCurrentNotification(null);
-    // Clear the notification and check for more
-    const remaining = newlyUnlocked.slice(1);
-    if (remaining.length > 0) {
-      // Show next notification after a brief delay
+    
+    // Remove the current notification from the queue
+    setNotificationQueue(prev => prev.slice(1));
+    
+    // Show next notification after a brief delay if there are more
+    if (notificationQueue.length > 1) {
       setTimeout(() => {
-        setCurrentNotification(remaining[0]);
+        setCurrentNotification(notificationQueue[1]);
       }, 500);
-    } else {
-      clearNewlyUnlocked();
     }
   };
 
@@ -69,7 +88,7 @@ export default function SkillTree() {
           <AchievementButton
             stats={stats}
             onClick={() => setShowAchievementsModal(true)}
-            hasNewAchievements={newlyUnlocked.length > 0}
+            hasNewAchievements={notificationQueue.length > 0}
           />
           <button
             onClick={toggleCompactMode}
