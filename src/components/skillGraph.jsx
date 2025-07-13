@@ -1,7 +1,6 @@
 /** @jsxImportSource react */
-import { useMemo, useState, useEffect } from "react";
-import useSkillTree from "../hooks/useSkillTree";
-import useAchievements from "../hooks/useAchievements";
+import { useState, useEffect } from "react";
+import { useSkillTreeStore } from "../store/skillTreeStore";
 import { allPaths } from "../data/paths";
 import { achievements } from "../data/achievements";
 import SkillNode from "./skills/SkillNode";
@@ -13,145 +12,168 @@ import {
 } from "./achievements";
 
 export default function SkillTree() {
+  // Get all state and actions from the Zustand store
   const {
     compactMode,
-    toggleCompactMode,
     skills,
     safePoints,
     unlocked,
+    highlightPaths,
+    unlockedAchievements,
+    newlyUnlocked,
+    stats,
+    toggleCompactMode,
     addPoint,
     subtractPoint,
     resetTree,
-    highlightPaths,
     toggleHighlightPath,
-  } = useSkillTree();
-
-  // Achievement system
-  const {
-    unlockedAchievements,
-    newlyUnlocked,
     clearNewlyUnlocked,
     getAchievementProgress,
-    stats,
-  } = useAchievements(safePoints, skills);
+    initializeAchievements,
+  } = useSkillTreeStore();
 
-  // Modal and notification state
+  // Modal and notification state (kept local as UI-only state)
   const [showAchievementsModal, setShowAchievementsModal] = useState(false);
   const [currentNotification, setCurrentNotification] = useState(null);
-  const [notificationQueue, setNotificationQueue] = useState([]);
+
+  // Initialize achievements from localStorage on mount
+  useEffect(() => {
+    initializeAchievements();
+  }, [initializeAchievements]);
 
   // Handle newly unlocked achievements
   useEffect(() => {
     if (newlyUnlocked.length > 0) {
-      // Add new achievements to the queue (avoid duplicates)
-      setNotificationQueue(prev => {
-        const newQueue = [...prev];
-        newlyUnlocked.forEach(achievement => {
-          if (!newQueue.find(item => item.id === achievement.id)) {
-            newQueue.push(achievement);
-          }
-        });
-        return newQueue;
-      });
-      
-      // Clear the newly unlocked from the hook
-      clearNewlyUnlocked();
+      // Show notification for the first newly unlocked achievement
+      setCurrentNotification(newlyUnlocked[0]);
     }
-  }, [newlyUnlocked, clearNewlyUnlocked]);
+  }, [newlyUnlocked]);
 
-  // Show notifications from the queue
-  useEffect(() => {
-    if (notificationQueue.length > 0 && !currentNotification) {
-      setCurrentNotification(notificationQueue[0]);
-    }
-  }, [notificationQueue, currentNotification]);
+  // === EVENT HANDLERS ===
+  const handleSkillClick = (skillId) => {
+    addPoint(skillId);
+  };
+
+  const handleSkillRightClick = (e, skillId) => {
+    e.preventDefault();
+    subtractPoint(skillId);
+  };
 
   const handleNotificationDismiss = () => {
     setCurrentNotification(null);
-    
-    // Remove the current notification from the queue
-    setNotificationQueue(prev => prev.slice(1));
-    
-    // Show next notification after a brief delay if there are more
-    if (notificationQueue.length > 1) {
-      setTimeout(() => {
-        setCurrentNotification(notificationQueue[1]);
-      }, 500);
-    }
+    clearNewlyUnlocked();
   };
 
+  // === RENDER ===
   return (
-    <div className="p-6">
-      <div className="mb-4 flex flex-wrap items-center justify-between">
-        <h1 className="text-2xl font-bold text-amber-200">Knife Skill Tree</h1>
-        <div className="flex gap-2">
-          <AchievementButton
-            stats={stats}
-            onClick={() => setShowAchievementsModal(true)}
-            hasNewAchievements={notificationQueue.length > 0}
-          />
+    <div className="min-h-screen bg-gradient-to-b from-purple-950 via-slate-900 to-black text-gray-200 p-4">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-purple-300 mb-2">
+            🔪 Kitchen Skills Tracker
+          </h1>
+          <p className="text-slate-400">
+            Master knife skills through structured learning
+          </p>
+        </div>
+
+        {/* Controls */}
+        <div className="flex flex-wrap items-center justify-center gap-4 mb-8">
           <button
             onClick={toggleCompactMode}
-            className="px-2 py-1 text-sm rounded bg-slate-700 text-white hover:bg-slate-600"
+            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
           >
-            {compactMode ? "Switch to Full View" : "Switch to Compact View"}
+            {compactMode ? "Full View" : "Compact View"}
           </button>
+          
           <button
             onClick={resetTree}
-            className="px-2 py-1 text-sm rounded bg-red-600 text-white hover:bg-red-700"
+            className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
           >
-            Reset
+            Reset Tree
           </button>
+
+          <AchievementButton 
+            onClick={() => setShowAchievementsModal(true)}
+            unlockedCount={unlockedAchievements.size}
+            totalCount={achievements.length}
+          />
         </div>
-      </div>
 
-      <PathLegend
-        allPaths={allPaths}
-        highlightPaths={highlightPaths}
-        toggleHighlightPath={toggleHighlightPath}
-      />
+        {/* Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className="bg-slate-800 rounded-lg p-4 text-center">
+            <div className="text-2xl font-bold text-purple-300">
+              {stats.totalPoints}
+            </div>
+            <div className="text-sm text-slate-400">Total Points</div>
+          </div>
+          
+          <div className="bg-slate-800 rounded-lg p-4 text-center">
+            <div className="text-2xl font-bold text-blue-300">
+              {stats.skillsUnlocked}/{stats.totalSkills}
+            </div>
+            <div className="text-sm text-slate-400">Skills Unlocked</div>
+          </div>
+          
+          <div className="bg-slate-800 rounded-lg p-4 text-center">
+            <div className="text-2xl font-bold text-green-300">
+              {stats.completionPercentage}%
+            </div>
+            <div className="text-sm text-slate-400">Completion</div>
+          </div>
+          
+          <div className="bg-slate-800 rounded-lg p-4 text-center">
+            <div className="text-2xl font-bold text-yellow-300">
+              {unlockedAchievements.size}/{achievements.length}
+            </div>
+            <div className="text-sm text-slate-400">Achievements</div>
+          </div>
+        </div>
 
-      <div
-        className="grid gap-4"
-        style={{ gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))" }}
-      >
-        {skills.map((skill) => {
-          if (!skill) return null;
-          const isUnlocked = unlocked[skill.id];
-          const isDimmed =
-            highlightPaths.length > 0 && !highlightPaths.includes(skill.path);
-
-          return (
-            <SkillNode
-              key={skill.id}
-              skill={skill}
-              points={safePoints[skill.id] || 0}
-              isUnlocked={isUnlocked}
-              isDimmed={isDimmed}
-              addPoint={addPoint}
-              subtractPoint={subtractPoint}
-            />
-          );
-        })}
-      </div>
-
-      {/* Achievement Modal */}
-      <AchievementsModal
-        isOpen={showAchievementsModal}
-        onClose={() => setShowAchievementsModal(false)}
-        achievements={achievements}
-        unlockedAchievements={unlockedAchievements}
-        getAchievementProgress={getAchievementProgress}
-        stats={stats}
-      />
-
-      {/* Achievement Notifications */}
-      {currentNotification && (
-        <AchievementNotification
-          achievement={currentNotification}
-          onDismiss={handleNotificationDismiss}
+        {/* Path Legend */}
+        <PathLegend
+          paths={allPaths}
+          highlightPaths={highlightPaths}
+          onToggleHighlight={toggleHighlightPath}
         />
-      )}
+
+        {/* Skill Tree */}
+        <div className="relative bg-slate-900 rounded-xl p-8 overflow-x-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {skills.map((skill) => (
+              <SkillNode
+                key={skill.id}
+                skill={skill}
+                currentPoints={safePoints[skill.id]}
+                isUnlocked={unlocked[skill.id]}
+                isHighlighted={highlightPaths.includes(skill.path)}
+                onClick={() => handleSkillClick(skill.id)}
+                onRightClick={(e) => handleSkillRightClick(e, skill.id)}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Achievement Notification */}
+        {currentNotification && (
+          <AchievementNotification
+            achievement={currentNotification}
+            onDismiss={handleNotificationDismiss}
+          />
+        )}
+
+        {/* Achievements Modal */}
+        {showAchievementsModal && (
+          <AchievementsModal
+            achievements={achievements}
+            unlockedAchievements={unlockedAchievements}
+            getProgress={getAchievementProgress}
+            onClose={() => setShowAchievementsModal(false)}
+          />
+        )}
+      </div>
     </div>
   );
 }

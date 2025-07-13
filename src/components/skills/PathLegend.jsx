@@ -1,18 +1,20 @@
 /** @jsxImportSource react */
 import { pathColors } from "../../data/paths";
 
-export default function PathLegend({ highlightPaths, toggleHighlightPath }) {
+export default function PathLegend({ paths, highlightPaths, onToggleHighlight }) {
   return (
-    <div className="flex flex-wrap gap-2 mb-6">
-      {Object.entries(pathColors).map(([path, color]) => (
+    <div className="flex flex-wrap gap-2 mb-6 justify-center">
+      {paths.map((path) => (
         <button
-          key={path}
-          onClick={() => toggleHighlightPath(path)}
-          className={`px-2 py-1 text-xs rounded border ${highlightPaths.includes(path)
-            ? "bg-opacity-90 border-white"
-            : "bg-opacity-30 border-gray-500"} ${color}`}
+          key={path.id}
+          onClick={() => onToggleHighlight(path.id)}
+          className={`px-3 py-2 text-sm rounded-lg border transition-all duration-200 ${
+            highlightPaths.includes(path.id)
+              ? "bg-opacity-90 border-white ring-2 ring-yellow-400"
+              : "bg-opacity-30 border-slate-500 hover:bg-opacity-50"
+          } ${pathColors[path.id] || pathColors.default}`}
         >
-          {path.charAt(0).toUpperCase() + path.slice(1)}
+          {path.name}
         </button>
       ))}
     </div>
