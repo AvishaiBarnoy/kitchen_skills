@@ -1,4 +1,4 @@
-import SkillGraph from "./components/SkillGraph";
+import SkillGraph from "./components/skillGraph";
 
 export default function App() {
   return (
