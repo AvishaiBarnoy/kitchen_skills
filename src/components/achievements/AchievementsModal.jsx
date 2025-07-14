@@ -3,16 +3,12 @@ import React, { useState } from 'react';
 import AchievementCard from './AchievementCard';
 
 export default function AchievementsModal({ 
-  isOpen, 
-  onClose, 
   achievements, 
   unlockedAchievements, 
-  getAchievementProgress, 
-  stats 
+  getProgress, 
+  onClose 
 }) {
   const [activeTab, setActiveTab] = useState('all');
-
-  if (!isOpen) return null;
 
   const rarityTabs = [
     { id: 'all', name: 'All', color: 'gray' },
@@ -28,114 +24,115 @@ export default function AchievementsModal({
 
   const getTabCount = (rarity) => {
     if (rarity === 'all') return achievements.length;
-    return achievements.filter(a => a.rarity === rarity).length;
+    return achievements.filter(achievement => achievement.rarity === rarity).length;
   };
 
   const getTabUnlockedCount = (rarity) => {
-    const rarityAchievements = rarity === 'all' 
-      ? achievements 
-      : achievements.filter(a => a.rarity === rarity);
-    return rarityAchievements.filter(a => unlockedAchievements.has(a.id)).length;
+    if (rarity === 'all') return unlockedAchievements.size;
+    return achievements.filter(achievement => 
+      achievement.rarity === rarity && unlockedAchievements.has(achievement.id)
+    ).length;
   };
 
+  // Calculate overall stats
+  const stats = {
+    unlocked: unlockedAchievements.size,
+    total: achievements.length,
+    percentage: Math.round((unlockedAchievements.size / achievements.length) * 100)
+  };
+
+  // Event handlers
+  const handleBackdropClick = (e) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
+  const handleEscapeKey = (e) => {
+    if (e.key === 'Escape') {
+      onClose();
+    }
+  };
+
+  // Add escape key listener
+  React.useEffect(() => {
+    document.addEventListener('keydown', handleEscapeKey);
+    return () => document.removeEventListener('keydown', handleEscapeKey);
+  }, []);
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-900 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      onClick={handleBackdropClick}
+    >
+      <div className="bg-slate-900 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
         {/* Header */}
-        <div className="p-6 border-b border-gray-700 bg-gradient-to-r from-purple-900 to-blue-900">
+        <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-white">Achievements</h2>
-              <p className="text-gray-300 mt-1">
-                Track your cooking mastery progress
+              <h2 className="text-2xl font-bold">🏆 Achievements</h2>
+              <p className="text-purple-100 text-sm">
+                {stats.unlocked} of {stats.total} unlocked ({stats.percentage}%)
               </p>
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-white transition-colors p-2"
+              className="text-white hover:text-purple-200 text-2xl font-bold"
             >
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
+              ×
             </button>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-4 mt-4">
-            <div className="bg-black/20 rounded-lg p-3 text-center">
-              <div className="text-2xl font-bold text-white">{stats.unlocked}</div>
-              <div className="text-sm text-gray-300">Unlocked</div>
-            </div>
-            <div className="bg-black/20 rounded-lg p-3 text-center">
-              <div className="text-2xl font-bold text-white">{stats.percentage}%</div>
-              <div className="text-sm text-gray-300">Complete</div>
-            </div>
-            <div className="bg-black/20 rounded-lg p-3 text-center">
-              <div className="text-2xl font-bold text-white">{stats.remaining}</div>
-              <div className="text-sm text-gray-300">Remaining</div>
-            </div>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="border-b border-gray-700 bg-gray-800">
-          <div className="flex overflow-x-auto">
-            {rarityTabs.map(tab => {
-              const count = getTabCount(tab.id);
-              const unlocked = getTabUnlockedCount(tab.id);
-              
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`
-                    px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors
-                    ${activeTab === tab.id
-                      ? 'border-blue-400 text-blue-400 bg-blue-400/10'
-                      : 'border-transparent text-gray-400 hover:text-gray-300'
-                    }
-                  `}
-                >
+        <div className="flex border-b border-slate-700">
+          {rarityTabs.map((tab) => {
+            const count = getTabCount(tab.id);
+            const unlockedCount = getTabUnlockedCount(tab.id);
+            const isActive = activeTab === tab.id;
+            
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`
+                  flex-1 py-3 px-4 text-sm font-medium transition-colors
+                  ${isActive 
+                    ? 'bg-slate-800 text-white border-b-2 border-purple-500' 
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  }
+                `}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <span className={`w-2 h-2 rounded-full bg-${tab.color}-500`} />
                   {tab.name}
-                  <span className="ml-2 text-xs bg-gray-700 px-2 py-1 rounded">
-                    {unlocked}/{count}
+                  <span className="text-xs opacity-70">
+                    ({unlockedCount}/{count})
                   </span>
-                </button>
-              );
-            })}
-          </div>
+                </div>
+              </button>
+            );
+          })}
         </div>
 
         {/* Content */}
         <div className="p-6 overflow-y-auto max-h-[60vh]">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filteredAchievements.map(achievement => {
-              const isUnlocked = unlockedAchievements.has(achievement.id);
-              const progress = getAchievementProgress(achievement);
-              
-              return (
+          {filteredAchievements.length === 0 ? (
+            <div className="text-center text-slate-400 py-8">
+              No achievements found for this category.
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {filteredAchievements.map((achievement) => (
                 <AchievementCard
                   key={achievement.id}
                   achievement={achievement}
-                  progress={progress}
-                  isUnlocked={isUnlocked}
+                  isUnlocked={unlockedAchievements.has(achievement.id)}
+                  progress={getProgress(achievement)}
                 />
-              );
-            })}
-          </div>
-
-          {filteredAchievements.length === 0 && (
-            <div className="text-center py-8 text-gray-400">
-              <p>No achievements in this category yet.</p>
+              ))}
             </div>
           )}
-        </div>
-
-        {/* Footer */}
-        <div className="p-4 border-t border-gray-700 bg-gray-800 text-center">
-          <p className="text-sm text-gray-400">
-            Keep practicing to unlock more achievements! 🏆
-          </p>
         </div>
       </div>
     </div>

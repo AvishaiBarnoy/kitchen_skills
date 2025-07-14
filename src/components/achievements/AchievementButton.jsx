@@ -1,7 +1,9 @@
 /** @jsxImportSource react */
 import React from 'react';
 
-export default function AchievementButton({ stats, onClick, hasNewAchievements = false }) {
+export default function AchievementButton({ onClick, unlockedCount, totalCount, hasNewAchievements = false }) {
+  const percentage = Math.round((unlockedCount / totalCount) * 100);
+  
   return (
     <button
       onClick={onClick}
@@ -24,7 +26,7 @@ export default function AchievementButton({ stats, onClick, hasNewAchievements =
         <div className="text-left">
           <div className="font-bold">Achievements</div>
           <div className="text-xs opacity-80">
-            {stats.unlocked}/{stats.total} ({stats.percentage}%)
+            {unlockedCount}/{totalCount} ({percentage}%)
           </div>
         </div>
       </div>
