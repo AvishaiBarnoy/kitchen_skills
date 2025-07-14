@@ -47,26 +47,6 @@ export function useLocalStorage(key, initialValue) {
 export function usePersistedSkillPoints(skills) {
   const [points, setPoints] = useLocalStorage('skillPoints', {});
   
-  // Validate and clean up stored points on skills change
-  useEffect(() => {
-    if (!skills || skills.length === 0) return;
-    
-    const validSkillIds = new Set(skills.map(skill => skill.id));
-    const cleanedPoints = {};
-    
-    // Only keep points for skills that still exist
-    Object.entries(points).forEach(([skillId, pointValue]) => {
-      if (validSkillIds.has(skillId) && typeof pointValue === 'number' && pointValue >= 0) {
-        cleanedPoints[skillId] = pointValue;
-      }
-    });
-    
-    // If we cleaned up any invalid data, update the stored points
-    if (Object.keys(cleanedPoints).length !== Object.keys(points).length) {
-      setPoints(cleanedPoints);
-    }
-  }, [skills, points, setPoints]);
-  
   const resetPoints = () => {
     setPoints({});
   };

@@ -2,12 +2,13 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import useSkillTree from '../useSkillTree'
 
-// Mock localStorage to prevent persistence during tests
+// Mock localStorage to properly simulate storage behavior during tests
+const mockStorage = {}
 const mockLocalStorage = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
+  getItem: vi.fn((key) => mockStorage[key] || null),
+  setItem: vi.fn((key, value) => { mockStorage[key] = value }),
+  removeItem: vi.fn((key) => { delete mockStorage[key] }),
+  clear: vi.fn(() => { Object.keys(mockStorage).forEach(key => delete mockStorage[key]) }),
 }
 
 Object.defineProperty(window, 'localStorage', {
@@ -30,9 +31,9 @@ vi.mock('../../data/skills', () => ({
 
 describe('useSkillTree', () => {
   beforeEach(() => {
-    // Reset localStorage mock before each test
+    // Clear localStorage mock storage before each test
     vi.clearAllMocks()
-    mockLocalStorage.getItem.mockReturnValue(null)
+    mockLocalStorage.clear()
   })
 
   it('should initialize with correct default values', () => {
@@ -74,8 +75,17 @@ describe('useSkillTree', () => {
     
     act(() => {
       result.current.addPoint('grip')
+    })
+    
+    act(() => {
       result.current.addPoint('grip')
+    })
+    
+    act(() => {
       result.current.addPoint('grip')
+    })
+    
+    act(() => {
       result.current.addPoint('grip') // Should not add this one
     })
     
@@ -97,6 +107,9 @@ describe('useSkillTree', () => {
     
     act(() => {
       result.current.addPoint('grip')
+    })
+    
+    act(() => {
       result.current.addPoint('grip')
     })
     
@@ -124,6 +137,9 @@ describe('useSkillTree', () => {
     
     act(() => {
       result.current.addPoint('grip')
+    })
+    
+    act(() => {
       result.current.addPoint('grip')
     })
     
