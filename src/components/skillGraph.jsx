@@ -12,25 +12,27 @@ import {
 } from "./achievements";
 
 export default function SkillTree() {
-  // Get all state and actions from the Zustand store
-  const {
-    compactMode,
-    skills,
-    safePoints,
-    unlocked,
-    highlightPaths,
-    unlockedAchievements,
-    newlyUnlocked,
-    stats,
-    toggleCompactMode,
-    addPoint,
-    subtractPoint,
-    resetTree,
-    toggleHighlightPath,
-    clearNewlyUnlocked,
-    getAchievementProgress,
-    initializeAchievements,
-  } = useSkillTreeStore();
+  // Get state and actions from the Zustand store using selectors
+  const compactMode = useSkillTreeStore((state) => state.compactMode);
+  const highlightPaths = useSkillTreeStore((state) => state.highlightPaths);
+  const unlockedAchievements = useSkillTreeStore((state) => state.unlockedAchievements);
+  const newlyUnlocked = useSkillTreeStore((state) => state.newlyUnlocked);
+  
+  // Get computed values using selectors
+  const skills = useSkillTreeStore((state) => state.getSkills());
+  const safePoints = useSkillTreeStore((state) => state.getSafePoints());
+  const unlocked = useSkillTreeStore((state) => state.getUnlocked());
+  const stats = useSkillTreeStore((state) => state.getStats());
+  
+  // Get actions
+  const toggleCompactMode = useSkillTreeStore((state) => state.toggleCompactMode);
+  const addPoint = useSkillTreeStore((state) => state.addPoint);
+  const subtractPoint = useSkillTreeStore((state) => state.subtractPoint);
+  const resetTree = useSkillTreeStore((state) => state.resetTree);
+  const toggleHighlightPath = useSkillTreeStore((state) => state.toggleHighlightPath);
+  const clearNewlyUnlocked = useSkillTreeStore((state) => state.clearNewlyUnlocked);
+  const getAchievementProgress = useSkillTreeStore((state) => state.getAchievementProgress);
+  const initializeAchievements = useSkillTreeStore((state) => state.initializeAchievements);
 
   // Modal and notification state (kept local as UI-only state)
   const [showAchievementsModal, setShowAchievementsModal] = useState(false);

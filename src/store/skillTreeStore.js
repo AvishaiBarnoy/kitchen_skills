@@ -17,13 +17,15 @@ export const useSkillTreeStore = create(
     unlockedAchievements: new Set(),
     newlyUnlocked: [],
 
-    // === COMPUTED VALUES ===
-    get skills() {
-      return get().compactMode ? compactSkillData : fullSkillsData;
+    // === COMPUTED VALUES (as functions) ===
+    getSkills: () => {
+      const { compactMode } = get();
+      return compactMode ? compactSkillData : fullSkillsData;
     },
 
-    get safePoints() {
-      const { points, skills } = get();
+    getSafePoints: () => {
+      const { points } = get();
+      const skills = get().getSkills();
       const result = {};
       for (const skill of skills) {
         result[skill.id] = points[skill.id] ?? 0;
@@ -31,18 +33,20 @@ export const useSkillTreeStore = create(
       return result;
     },
 
-    get unlocked() {
-      const { skills, points } = get();
+    getUnlocked: () => {
+      const { points } = get();
+      const skills = get().getSkills();
       return computeUnlocks(skills, points);
     },
 
-    get totalPoints() {
-      const { safePoints } = get();
+    getTotalPoints: () => {
+      const safePoints = get().getSafePoints();
       return Object.values(safePoints).reduce((sum, points) => sum + points, 0);
     },
 
-    get stats() {
-      const { safePoints, skills } = get();
+    getStats: () => {
+      const safePoints = get().getSafePoints();
+      const skills = get().getSkills();
       const totalPoints = Object.values(safePoints).reduce((sum, points) => sum + points, 0);
       const skillsUnlocked = skills.filter(skill => safePoints[skill.id] > 0).length;
       const totalSkills = skills.length;
@@ -74,7 +78,8 @@ export const useSkillTreeStore = create(
 
     // === SKILL TREE ACTIONS ===
     canAddPoint: (id) => {
-      const { skills, points } = get();
+      const { points } = get();
+      const skills = get().getSkills();
       const skill = skills.find((s) => s.id === id);
       if (!skill) return false;
 
@@ -88,24 +93,29 @@ export const useSkillTreeStore = create(
     },
 
     addPoint: (id) => {
-      const { skills, points, canAddPoint } = get();
+      const { points } = get();
+      const skills = get().getSkills();
       const skill = skills.find((s) => s.id === id);
       const max = skill?.max ?? Infinity;
 
-      if (!canAddPoint(id)) return;
+      // Check if we can add point
+      const current = points[id] || 0;
+      if (current >= max) return;
 
-      set((state) => {
-        const current = state.points[id] || 0;
-        if (current >= max) return state;
-        
-        return {
-          ...state,
-          points: {
-            ...state.points,
-            [id]: current + 1,
-          },
-        };
-      });
+      const prereqs = skill.prereq || [];
+      const canAdd = prereqs.every(
+        (req) => (points[req.id] || 0) >= req.points
+      );
+
+      if (!canAdd) return;
+
+      set((state) => ({
+        ...state,
+        points: {
+          ...state.points,
+          [id]: current + 1,
+        },
+      }));
     },
 
     subtractPoint: (id) => {
@@ -158,7 +168,9 @@ export const useSkillTreeStore = create(
     },
 
     checkAchievementCondition: (achievement) => {
-      const { safePoints, skills, totalPoints } = get();
+      const safePoints = get().getSafePoints();
+      const skills = get().getSkills();
+      const totalPoints = get().getTotalPoints();
       
       switch (achievement.type) {
         case achievementTypes.FIRST_STEPS:
@@ -188,11 +200,11 @@ export const useSkillTreeStore = create(
     },
 
     checkForNewAchievements: () => {
-      const { unlockedAchievements, checkAchievementCondition } = get();
+      const { unlockedAchievements } = get();
       const newUnlocked = [];
 
       for (const achievement of achievements) {
-        if (!unlockedAchievements.has(achievement.id) && checkAchievementCondition(achievement)) {
+        if (!unlockedAchievements.has(achievement.id) && get().checkAchievementCondition(achievement)) {
           newUnlocked.push(achievement);
         }
       }
@@ -223,7 +235,9 @@ export const useSkillTreeStore = create(
     },
 
     getAchievementProgress: (achievement) => {
-      const { safePoints, skills, totalPoints } = get();
+      const safePoints = get().getSafePoints();
+      const skills = get().getSkills();
+      const totalPoints = get().getTotalPoints();
       
       switch (achievement.type) {
         case achievementTypes.FIRST_STEPS:
