@@ -3,7 +3,18 @@ import React from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { pathColors } from "../../data/paths";
 
-export default function SkillNode({
+/**
+ * SkillNode component represents a single skill in the skill tree
+ * Optimized with React.memo to prevent unnecessary re-renders
+ * @param {Object} skill - The skill data object
+ * @param {number} points - Current points invested in this skill
+ * @param {boolean} isUnlocked - Whether the skill is unlocked
+ * @param {boolean} isDimmed - Whether the skill should appear dimmed
+ * @param {Function} addPoint - Function to add a point to the skill
+ * @param {Function} subtractPoint - Function to subtract a point from the skill
+ * @param {Function} canAddPoint - Function to check if a point can be added
+ */
+const SkillNode = React.memo(function SkillNode({
   skill,
   points,
   isUnlocked,
@@ -43,7 +54,21 @@ export default function SkillNode({
               e.preventDefault();
               subtractPoint(skill.id);
             }}
-            className={`rounded-full p-2 shadow-md text-sm text-center transition-colors duration-200
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                if (isUnlocked && canAdd) {
+                  addPoint(skill.id);
+                }
+              } else if (e.key === 'Backspace' || e.key === 'Delete') {
+                e.preventDefault();
+                subtractPoint(skill.id);
+              }
+            }}
+            tabIndex={isUnlocked ? 0 : -1}
+            role="button"
+            aria-label={`${skill.name} skill. ${points} out of ${skill.max} points. ${skill.description}. ${tooltipContent || (canAdd ? 'Click to add point, right-click to remove' : '')}`}
+            className={`rounded-full p-2 shadow-md text-sm text-center transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 focus:ring-offset-gray-900
               ${baseColor}
               ${!canAdd ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}
             `}
@@ -70,5 +95,7 @@ export default function SkillNode({
       </Tooltip.Root>
     </Tooltip.Provider>
   );
-}
+});
+
+export default SkillNode;
 

@@ -3,22 +3,24 @@ import { achievements, achievementTypes } from '../data/achievements';
 
 const STORAGE_KEY = 'knife-skill-achievements';
 
-export default function useAchievements(skillPoints, skills) {
-  const [unlockedAchievements, setUnlockedAchievements] = useState(new Set());
-  const [newlyUnlocked, setNewlyUnlocked] = useState([]);
-
-  // Load achievements from localStorage on mount
-  useEffect(() => {
+// Helper function to load achievements from localStorage synchronously
+const loadStoredAchievements = () => {
+  try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        setUnlockedAchievements(new Set(parsed));
-      } catch (error) {
-        console.error('Failed to parse stored achievements:', error);
-      }
+      const parsed = JSON.parse(stored);
+      return new Set(parsed);
     }
-  }, []);
+  } catch (error) {
+    console.error('Failed to parse stored achievements:', error);
+  }
+  return new Set();
+};
+
+export default function useAchievements(skillPoints, skills) {
+  // ✅ SOLUTION: Initialize with localStorage data immediately (synchronous)
+  const [unlockedAchievements, setUnlockedAchievements] = useState(() => loadStoredAchievements());
+  const [newlyUnlocked, setNewlyUnlocked] = useState([]);
 
   // Calculate total skill points
   const totalPoints = useMemo(() => {
