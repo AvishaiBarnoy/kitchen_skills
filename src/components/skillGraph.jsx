@@ -4,10 +4,12 @@ import useSkillTreeWithStore from "../hooks/useSkillTreeStore";
 import useAchievements from "../hooks/useAchievements";
 import useSkillTreeStore from "../stores/skillTreeStore";
 import useAchievementStore from "../stores/achievementStore";
-import { allPaths } from "../data/paths";
+import { pathColors } from "../data/paths";
+import { getTreeInfo } from "../data/skillTrees";
 import { achievements } from "../data/achievements";
 import SkillNode from "./skills/SkillNode";
 import PathLegend from "./skills/PathLegend";
+import TreeSelector from "./layout/TreeSelector";
 import { 
   AchievementButton, 
   AchievementNotification, 
@@ -26,6 +28,7 @@ export default function SkillTree() {
     resetTree,
     highlightPaths,
     toggleHighlightPath,
+    currentTreeId,
   } = useSkillTreeWithStore();
 
   // Achievement system (still using the hook for logic, but store for state)
@@ -83,8 +86,11 @@ export default function SkillTree() {
 
   return (
     <div className="p-6">
+      {/* Tree Selector */}
+      <TreeSelector />
+      
       <div className="mb-4 flex flex-wrap items-center justify-between">
-        <h1 className="text-2xl font-bold text-amber-200">Knife Skill Tree</h1>
+        <h1 className="text-2xl font-bold text-amber-200">Cooking Skills</h1>
         <div className="flex gap-2">
           <AchievementButton
             stats={stats}
@@ -107,7 +113,7 @@ export default function SkillTree() {
       </div>
 
       <PathLegend
-        allPaths={allPaths}
+        allPaths={getTreeInfo(currentTreeId)?.paths || []}
         highlightPaths={highlightPaths}
         toggleHighlightPath={toggleHighlightPath}
       />

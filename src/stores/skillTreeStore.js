@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { fullSkillsData, compactSkillData } from '../data/skills';
+import { getSkillsForTree } from '../data/skillTrees';
 import { computeUnlocks } from '../lib/utils';
 
 const useSkillTreeStore = create(
@@ -23,8 +23,8 @@ const useSkillTreeStore = create(
       
       // Getters
       getCurrentSkills: () => {
-        const { compactMode } = get();
-        return compactMode ? compactSkillData : fullSkillsData;
+        const { compactMode, currentTreeId } = get();
+        return getSkillsForTree(currentTreeId, compactMode);
       },
       
       getCurrentPoints: () => {
