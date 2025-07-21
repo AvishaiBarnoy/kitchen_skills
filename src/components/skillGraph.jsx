@@ -32,13 +32,14 @@ export default function SkillTree() {
   } = useSkillTreeWithStore();
 
   // Achievement system (still using the hook for logic, but store for state)
+  const { skillPoints } = useSkillTreeStore(); // Get all skill points across all trees
   const {
     unlockedAchievements,
     newlyUnlocked,
     clearNewlyUnlocked,
     getAchievementProgress,
     stats,
-  } = useAchievements(safePoints, skills);
+  } = useAchievements(skillPoints, skills);
 
   // Modal and notification state from store
   const {
