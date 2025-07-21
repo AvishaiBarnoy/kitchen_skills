@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { ChefHat, Trophy, BookOpen, Target, Play } from 'lucide-react';
+import { ChefHat, Trophy, BookOpen, Target, Play, User } from 'lucide-react';
 import SkillGraph from './skillGraph';
+import Profile from './Profile';
 import { skillTrees, getAvailableTreeIds } from '../data/skillTrees';
 import { achievements } from '../data/achievements';
 import useSkillTreeStore from '../stores/skillTreeStore';
@@ -61,13 +62,55 @@ export default function MainNavigation() {
                 <ChefHat className="h-6 w-6" />
                 <span className="font-semibold">Kitchen Skills</span>
               </button>
-              <div className="text-sm text-gray-400">
-                Progress: {overallProgressPercentage}%
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={() => setCurrentView('profile')}
+                  className="flex items-center space-x-1 text-gray-400 hover:text-purple-300 transition-colors"
+                >
+                  <User className="h-4 w-4" />
+                  <span className="text-sm">Profile</span>
+                </button>
+                <div className="text-sm text-gray-400">
+                  Progress: {overallProgressPercentage}%
+                </div>
               </div>
             </div>
           </div>
         </nav>
         <SkillGraph />
+      </div>
+    );
+  }
+
+  if (currentView === 'profile') {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-purple-950 via-slate-900 to-black text-gray-200">
+        <nav className="bg-slate-800/50 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16">
+              <button
+                onClick={() => setCurrentView('home')}
+                className="flex items-center space-x-2 text-purple-300 hover:text-purple-100 transition-colors"
+              >
+                <ChefHat className="h-6 w-6" />
+                <span className="font-semibold">Kitchen Skills</span>
+              </button>
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={() => setCurrentView('skillTree')}
+                  className="flex items-center space-x-1 text-gray-400 hover:text-purple-300 transition-colors"
+                >
+                  <Target className="h-4 w-4" />
+                  <span className="text-sm">Skills</span>
+                </button>
+                <div className="text-sm text-gray-400">
+                  Progress: {overallProgressPercentage}%
+                </div>
+              </div>
+            </div>
+          </div>
+        </nav>
+        <Profile />
       </div>
     );
   }
@@ -155,7 +198,7 @@ export default function MainNavigation() {
         {/* Quick Actions */}
         <section className="mb-12">
           <h2 className="text-2xl font-bold mb-6 text-white">Quick Start</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             
             {/* Skill Trees */}
             <div 
@@ -215,6 +258,28 @@ export default function MainNavigation() {
                 Track your milestones and unlock special recognition badges
               </p>
               <div className="text-xs text-yellow-300">View progress →</div>
+            </div>
+
+            {/* Profile */}
+            <div 
+              onClick={() => setCurrentView('profile')}
+              className="bg-slate-800/40 backdrop-blur-sm rounded-lg border border-slate-700 p-6 cursor-pointer hover:bg-slate-700/40 transition-all duration-200 group"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-purple-500/20 rounded-lg group-hover:bg-purple-500/30 transition-colors">
+                    <User className="h-6 w-6 text-purple-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-white">Profile</h3>
+                </div>
+                <div className="text-sm text-purple-300 bg-purple-500/20 px-2 py-1 rounded">
+                  {overallProgressPercentage}%
+                </div>
+              </div>
+              <p className="text-gray-400 text-sm mb-3">
+                View detailed progress, statistics, and manage your culinary journey
+              </p>
+              <div className="text-xs text-purple-300">View profile →</div>
             </div>
           </div>
         </section>

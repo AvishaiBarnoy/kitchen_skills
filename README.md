@@ -31,11 +31,12 @@ Transform your kitchen practice into an engaging adventure where every technique
 
 ## 🗺️ Roadmap
 
-### Current Focus (Stage 1)
+### Current Focus (Stage 4)
 - ✅ Multi-tree architecture with skill dependencies
-- ✅ Achievement tracking and progress persistence
+- ✅ Achievement tracking and progress persistence  
 - ✅ Responsive UI with modern design
-- 🔄 Code optimization and cleanup
+- ✅ Code optimization and cleanup
+- ✅ User profiles with detailed progress tracking
 
 ### Coming Soon
 - **Educational Integration**: Video tutorials, step-by-step guides, and practice exercises

@@ -24,15 +24,15 @@ An interactive skill-tracking and learning platform for cooking techniques. Desi
 
 ---
 
-## 🧠 Stage 3: User Profiles & Progress Persistence
+## 🧠 Stage 3: User Profiles & Progress Persistence ✅ **COMPLETED**
 **Goal**: Let users track progress across sessions.
 
-- [ ] Store skill points and preferences in localStorage or IndexedDB.
-- [ ] Add basic profile view:
+- [x] Store skill points and preferences in localStorage or IndexedDB.
+- [x] Add basic profile view:
   - Total skill points
   - Completed paths
   - Suggested next steps
-- [ ] Enable save/load functionality per tree.
+- [x] Enable save/load functionality per tree.
 
 ---
 
