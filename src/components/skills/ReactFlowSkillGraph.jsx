@@ -15,7 +15,7 @@ import dagre from 'dagre';
 import 'reactflow/dist/style.css';
 
 import SkillNode from './SkillNode';
-import { pathColors } from '../../data/paths';
+import { pathColors } from '@/data/paths';
 
 // Custom node wrapper for React Flow
 const SkillNodeWrapper = ({ data }) => {

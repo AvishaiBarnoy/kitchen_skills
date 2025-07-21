@@ -4,10 +4,10 @@ import { ChefHat, Trophy, BookOpen, Target, Play, User } from 'lucide-react';
 import SkillGraph from './skillGraph';
 import Profile from './Profile';
 import ResponsiveWrapper from './layout/ResponsiveWrapper';
-import { skillTrees, getAvailableTreeIds } from '../data/skillTrees';
-import { achievements } from '../data/achievements';
-import useSkillTreeStore from '../stores/skillTreeStore';
-import useAchievementStore from '../stores/achievementStore';
+import { skillTrees, getAvailableTreeIds } from '@/data/skillTrees';
+import { achievements } from '@/data/achievements';
+import useSkillTreeStore from '@/stores/skillTreeStore';
+import useAchievementStore from '@/stores/achievementStore';
 
 export default function MainNavigation() {
   const [currentView, setCurrentView] = useState('home');

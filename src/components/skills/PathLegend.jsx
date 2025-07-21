@@ -1,6 +1,6 @@
 /** @jsxImportSource react */
 import { motion } from "framer-motion";
-import { pathColors } from "../../data/paths";
+import { pathColors } from "@/data/paths";
 
 export default function PathLegend({ allPaths, highlightPaths, toggleHighlightPath }) {
   if (!allPaths || allPaths.length === 0) return null;

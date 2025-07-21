@@ -2,7 +2,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { pathColors } from "../../data/paths";
+import { pathColors } from "@/data/paths";
 
 /**
  * SkillNode component represents a single skill in the skill tree
