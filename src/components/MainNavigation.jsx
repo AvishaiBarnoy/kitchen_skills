@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChefHat, Trophy, BookOpen, Target, Play, User } from 'lucide-react';
 import SkillGraph from './skillGraph';
 import Profile from './Profile';
+import LearningPaths from './LearningPaths';
+import AchievementsView from './AchievementsView';
 import ResponsiveWrapper from './layout/ResponsiveWrapper';
 import { skillTrees, getAvailableTreeIds } from '@/data/skillTrees';
 import { achievements } from '@/data/achievements';
@@ -155,6 +157,128 @@ export default function MainNavigation() {
     );
   }
 
+  if (currentView === 'learningPaths') {
+    return (
+      <ResponsiveWrapper className="min-h-screen bg-gradient-to-b from-purple-950 via-slate-900 to-black text-gray-200">
+        <motion.nav 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-slate-800/50 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-50"
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setCurrentView('home')}
+                className="flex items-center space-x-2 text-purple-300 hover:text-purple-100 transition-colors"
+              >
+                <ChefHat className="h-6 w-6" />
+                <span className="font-semibold">Kitchen Skills</span>
+              </motion.button>
+              <div className="flex items-center space-x-4">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setCurrentView('skillTree')}
+                  className="flex items-center space-x-1 text-gray-400 hover:text-purple-300 transition-colors"
+                >
+                  <Target className="h-4 w-4" />
+                  <span className="text-sm">Skills</span>
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setCurrentView('achievements')}
+                  className="flex items-center space-x-1 text-gray-400 hover:text-purple-300 transition-colors"
+                >
+                  <Trophy className="h-4 w-4" />
+                  <span className="text-sm">Achievements</span>
+                </motion.button>
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-sm text-gray-400"
+                >
+                  Progress: {overallProgressPercentage}%
+                </motion.div>
+              </div>
+            </div>
+          </div>
+        </motion.nav>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <LearningPaths />
+        </motion.div>
+      </ResponsiveWrapper>
+    );
+  }
+
+  if (currentView === 'achievements') {
+    return (
+      <ResponsiveWrapper className="min-h-screen bg-gradient-to-b from-purple-950 via-slate-900 to-black text-gray-200">
+        <motion.nav 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-slate-800/50 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-50"
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setCurrentView('home')}
+                className="flex items-center space-x-2 text-purple-300 hover:text-purple-100 transition-colors"
+              >
+                <ChefHat className="h-6 w-6" />
+                <span className="font-semibold">Kitchen Skills</span>
+              </motion.button>
+              <div className="flex items-center space-x-4">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setCurrentView('skillTree')}
+                  className="flex items-center space-x-1 text-gray-400 hover:text-purple-300 transition-colors"
+                >
+                  <Target className="h-4 w-4" />
+                  <span className="text-sm">Skills</span>
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setCurrentView('learningPaths')}
+                  className="flex items-center space-x-1 text-gray-400 hover:text-purple-300 transition-colors"
+                >
+                  <BookOpen className="h-4 w-4" />
+                  <span className="text-sm">Paths</span>
+                </motion.button>
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-sm text-gray-400"
+                >
+                  Progress: {overallProgressPercentage}%
+                </motion.div>
+              </div>
+            </div>
+          </div>
+        </motion.nav>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <AchievementsView />
+        </motion.div>
+      </ResponsiveWrapper>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-950 via-slate-900 to-black text-gray-200">
       {/* Header */}
@@ -241,8 +365,10 @@ export default function MainNavigation() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             
             {/* Skill Trees */}
-            <div 
+            <motion.div 
               onClick={() => setCurrentView('skillTree')}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               className="bg-slate-800/40 backdrop-blur-sm rounded-lg border border-slate-700 p-6 cursor-pointer hover:bg-slate-700/40 transition-all duration-200 group"
             >
               <div className="flex items-center justify-between mb-4">
@@ -260,10 +386,15 @@ export default function MainNavigation() {
                 Explore interactive skill trees and unlock new culinary techniques
               </p>
               <div className="text-xs text-purple-300">Click to start learning →</div>
-            </div>
+            </motion.div>
 
             {/* Learning Paths */}
-            <div className="bg-slate-800/40 backdrop-blur-sm rounded-lg border border-slate-700 p-6 cursor-pointer hover:bg-slate-700/40 transition-all duration-200 group">
+            <motion.div 
+              onClick={() => setCurrentView('learningPaths')}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="bg-slate-800/40 backdrop-blur-sm rounded-lg border border-slate-700 p-6 cursor-pointer hover:bg-slate-700/40 transition-all duration-200 group"
+            >
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-3">
                   <div className="p-2 bg-blue-500/20 rounded-lg group-hover:bg-blue-500/30 transition-colors">
@@ -272,17 +403,22 @@ export default function MainNavigation() {
                   <h3 className="text-lg font-semibold text-white">Learning Paths</h3>
                 </div>
                 <div className="text-sm text-blue-300 bg-blue-500/20 px-2 py-1 rounded">
-                  Guided
+                  6 paths
                 </div>
               </div>
               <p className="text-gray-400 text-sm mb-3">
                 Follow structured learning paths designed for progressive skill building
               </p>
-              <div className="text-xs text-blue-300">Coming soon →</div>
-            </div>
+              <div className="text-xs text-blue-300">Explore paths →</div>
+            </motion.div>
 
             {/* Achievements */}
-            <div className="bg-slate-800/40 backdrop-blur-sm rounded-lg border border-slate-700 p-6 cursor-pointer hover:bg-slate-700/40 transition-all duration-200 group">
+            <motion.div 
+              onClick={() => setCurrentView('achievements')}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="bg-slate-800/40 backdrop-blur-sm rounded-lg border border-slate-700 p-6 cursor-pointer hover:bg-slate-700/40 transition-all duration-200 group"
+            >
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-3">
                   <div className="p-2 bg-yellow-500/20 rounded-lg group-hover:bg-yellow-500/30 transition-colors">
@@ -298,11 +434,13 @@ export default function MainNavigation() {
                 Track your milestones and unlock special recognition badges
               </p>
               <div className="text-xs text-yellow-300">View progress →</div>
-            </div>
+            </motion.div>
 
             {/* Profile */}
-            <div 
+            <motion.div 
               onClick={() => setCurrentView('profile')}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               className="bg-slate-800/40 backdrop-blur-sm rounded-lg border border-slate-700 p-6 cursor-pointer hover:bg-slate-700/40 transition-all duration-200 group"
             >
               <div className="flex items-center justify-between mb-4">
@@ -320,7 +458,7 @@ export default function MainNavigation() {
                 View detailed progress, statistics, and manage your culinary journey
               </p>
               <div className="text-xs text-purple-300">View profile →</div>
-            </div>
+            </motion.div>
           </div>
         </section>
 
