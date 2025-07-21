@@ -32,7 +32,8 @@ export default function MainNavigation() {
       
       const points = skillPoints[treeId] || {};
       const earnedPoints = Object.values(points).reduce((sum, pts) => sum + (pts || 0), 0);
-      const totalPossible = (tree.skills || []).reduce((sum, skill) => sum + (skill?.max || 0), 0);
+      const skills = tree.fullData || [];
+      const totalPossible = skills.reduce((sum, skill) => sum + (skill?.max || 0), 0);
       
       return {
         earned: acc.earned + earnedPoints,
@@ -228,7 +229,8 @@ export default function MainNavigation() {
               
               const points = skillPoints[treeId] || {};
               const earnedPoints = Object.values(points).reduce((sum, pts) => sum + (pts || 0), 0);
-              const totalPossible = (tree.skills || []).reduce((sum, skill) => sum + (skill?.max || 0), 0);
+              const skills = tree.fullData || [];
+              const totalPossible = skills.reduce((sum, skill) => sum + (skill?.max || 0), 0);
               const treeProgress = totalPossible > 0 ? Math.round((earnedPoints / totalPossible) * 100) : 0;
 
               return (
@@ -253,7 +255,7 @@ export default function MainNavigation() {
                   
                   <div className="flex items-center justify-between text-xs text-gray-400">
                     <span>{earnedPoints} / {totalPossible} points</span>
-                    <span>{(tree.skills || []).length} skills</span>
+                    <span>{skills.length} skills</span>
                   </div>
                 </div>
               );
