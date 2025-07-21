@@ -11,6 +11,10 @@ const useSkillTreeStore = create(
       compactMode: false,
       highlightPaths: [],
       
+      // Learning path state
+      activeLearningPath: null,
+      learningPathProgress: {},
+      
       // Skill points for all trees (will support multiple trees in the future)
       skillPoints: {
         'knife-skills': {}
@@ -169,6 +173,17 @@ const useSkillTreeStore = create(
           skillPoints: newSkillPoints
         };
       }),
+      
+      // Learning path actions
+      setActiveLearningPath: (pathId) => set({ activeLearningPath: pathId }),
+      
+      clearActiveLearningPath: () => set({ activeLearningPath: null }),
+      
+      getLearningPathProgress: (pathId) => {
+        const { skillPoints } = get();
+        // This will be calculated based on the learning path requirements
+        return get().learningPathProgress[pathId] || { completed: 0, total: 0 };
+      },
     }),
     {
       name: 'skill-tree-storage',

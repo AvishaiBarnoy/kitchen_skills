@@ -33,5 +33,11 @@ export default function useSkillTreeWithStore() {
     // Additional store methods for future use
     setCurrentTree: store.setCurrentTree,
     currentTreeId: store.currentTreeId,
+    
+    // Learning path methods
+    activeLearningPath: store.activeLearningPath,
+    setActiveLearningPath: store.setActiveLearningPath,
+    clearActiveLearningPath: store.clearActiveLearningPath,
+    getLearningPathProgress: store.getLearningPathProgress,
   };
 }

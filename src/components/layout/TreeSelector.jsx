@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import useSkillTreeStore from '../../stores/skillTreeStore';
 import { skillTrees, getAvailableTreeIds, learningPaths, getSkillsForTree } from '../../data/skillTrees';
+import LearningPathModal from './LearningPathModal';
 
 export default function TreeSelector() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showPaths, setShowPaths] = useState(false);
+  const [selectedPath, setSelectedPath] = useState(null);
   const { currentTreeId, setCurrentTree, skillPoints, compactMode } = useSkillTreeStore();
   
   const availableTreeIds = getAvailableTreeIds();
@@ -19,6 +21,14 @@ export default function TreeSelector() {
     setShowPaths(!showPaths);
   };
 
+  const handlePathClick = (pathId) => {
+    setSelectedPath(pathId);
+  };
+
+  const closeLearningPathModal = () => {
+    setSelectedPath(null);
+  };
+
   // Calculate progress for each tree
   const getTreeProgress = (treeId) => {
     const skills = getSkillsForTree(treeId, compactMode);
@@ -31,6 +41,29 @@ export default function TreeSelector() {
       earned: earnedPoints,
       total: totalPossiblePoints,
       percentage: totalPossiblePoints > 0 ? Math.round((earnedPoints / totalPossiblePoints) * 100) : 0
+    };
+  };
+
+  // Calculate progress for learning paths
+  const getLearningPathProgress = (pathId) => {
+    const path = learningPaths[pathId];
+    if (!path) return { completed: 0, total: 0, percentage: 0 };
+    
+    let completed = 0;
+    const total = path.skills.length;
+    
+    path.skills.forEach(({ treeId, skillId, targetPoints }) => {
+      const treePoints = skillPoints[treeId] || {};
+      const currentPoints = treePoints[skillId] || 0;
+      if (currentPoints >= targetPoints) {
+        completed++;
+      }
+    });
+    
+    return {
+      completed,
+      total,
+      percentage: total > 0 ? Math.round((completed / total) * 100) : 0
     };
   };
 
@@ -130,21 +163,39 @@ export default function TreeSelector() {
           </p>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {Object.entries(learningPaths).map(([pathId, path]) => (
-              <div
-                key={pathId}
-                className="p-3 bg-slate-800/60 border border-slate-600 rounded-lg hover:border-slate-500 transition-colors cursor-pointer"
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xl">{path.icon}</span>
-                  <span className="font-medium text-white">{path.name}</span>
+            {Object.entries(learningPaths).map(([pathId, path]) => {
+              const progress = getLearningPathProgress(pathId);
+              
+              return (
+                <div
+                  key={pathId}
+                  onClick={() => handlePathClick(pathId)}
+                  className="p-3 bg-slate-800/60 border border-slate-600 rounded-lg hover:border-slate-500 hover:bg-slate-800/80 transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xl">{path.icon}</span>
+                    <span className="font-medium text-white">{path.name}</span>
+                    {progress.percentage > 0 && (
+                      <span className="text-xs bg-green-600 text-white px-2 py-0.5 rounded-full">
+                        {progress.percentage}%
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-400 mb-2">{path.description}</p>
+                  <div className="text-xs text-gray-500 mb-2">
+                    {path.skills.length} skills across {new Set(path.skills.map(s => s.treeId)).size} trees
+                  </div>
+                  {progress.total > 0 && (
+                    <div className="w-full bg-gray-600 rounded-full h-1">
+                      <div 
+                        className="bg-green-500 h-1 rounded-full transition-all duration-300" 
+                        style={{ width: `${progress.percentage}%` }}
+                      ></div>
+                    </div>
+                  )}
                 </div>
-                <p className="text-sm text-gray-400 mb-2">{path.description}</p>
-                <div className="text-xs text-gray-500">
-                  {path.skills.length} skills across {new Set(path.skills.map(s => s.treeId)).size} trees
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
           
           <div className="mt-4 text-sm text-gray-400">
@@ -160,6 +211,12 @@ export default function TreeSelector() {
           onClick={() => setShowDropdown(false)}
         />
       )}
+
+      {/* Learning Path Modal */}
+      <LearningPathModal 
+        pathId={selectedPath}
+        onClose={closeLearningPathModal}
+      />
     </div>
   );
 }
