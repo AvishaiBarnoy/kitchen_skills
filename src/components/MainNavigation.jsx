@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChefHat, Trophy, BookOpen, Target, Play, Users, Settings } from 'lucide-react';
+import { ChefHat, Trophy, BookOpen, Target, Play } from 'lucide-react';
 import SkillGraph from './skillGraph';
 import { skillTrees, getAvailableTreeIds } from '../data/skillTrees';
 import { achievements } from '../data/achievements';
@@ -8,25 +8,44 @@ import useAchievementStore from '../stores/achievementStore';
 
 export default function MainNavigation() {
   const [currentView, setCurrentView] = useState('home');
-  const { skillPoints } = useSkillTreeStore();
-  const { unlockedAchievements } = useAchievementStore();
-
-  // Calculate overall progress
-  const availableTreeIds = getAvailableTreeIds();
-  const totalProgress = availableTreeIds.reduce((acc, treeId) => {
-    const tree = skillTrees[treeId];
-    const points = skillPoints[treeId] || {};
-    const earnedPoints = Object.values(points).reduce((sum, pts) => sum + pts, 0);
-    const totalPossible = tree.skills.reduce((sum, skill) => sum + skill.max, 0);
-    return {
-      earned: acc.earned + earnedPoints,
-      total: acc.total + totalPossible
-    };
-  }, { earned: 0, total: 0 });
-
-  const overallProgressPercentage = totalProgress.total > 0 
-    ? Math.round((totalProgress.earned / totalProgress.total) * 100) 
-    : 0;
+  
+  // Store data with error handling
+  const skillTreeStoreData = useSkillTreeStore() || {};
+  const achievementStoreData = useAchievementStore() || {};
+  
+  const { skillPoints = {} } = skillTreeStoreData;
+  const { unlockedAchievements = {} } = achievementStoreData;
+  
+  // Convert unlockedAchievements object to array length
+  const unlockedAchievementsCount = Object.keys(unlockedAchievements || {}).length;
+  
+  // Calculate overall progress with error handling
+  let availableTreeIds = [];
+  let totalProgress = { earned: 0, total: 0 };
+  let overallProgressPercentage = 0;
+  
+  try {
+    availableTreeIds = getAvailableTreeIds() || [];
+    totalProgress = availableTreeIds.reduce((acc, treeId) => {
+      const tree = skillTrees[treeId];
+      if (!tree) return acc;
+      
+      const points = skillPoints[treeId] || {};
+      const earnedPoints = Object.values(points).reduce((sum, pts) => sum + (pts || 0), 0);
+      const totalPossible = (tree.skills || []).reduce((sum, skill) => sum + (skill?.max || 0), 0);
+      
+      return {
+        earned: acc.earned + earnedPoints,
+        total: acc.total + totalPossible
+      };
+    }, { earned: 0, total: 0 });
+    
+    overallProgressPercentage = totalProgress.total > 0 
+      ? Math.round((totalProgress.earned / totalProgress.total) * 100) 
+      : 0;
+  } catch (error) {
+    console.warn('Error calculating progress:', error);
+  }
 
   if (currentView === 'skillTree') {
     return (
@@ -71,7 +90,7 @@ export default function MainNavigation() {
                 <div className="text-xs text-gray-400">Skill Points</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-yellow-400">{unlockedAchievements.length}</div>
+                <div className="text-2xl font-bold text-yellow-400">{unlockedAchievementsCount}</div>
                 <div className="text-xs text-gray-400">Achievements</div>
               </div>
             </div>
@@ -125,7 +144,7 @@ export default function MainNavigation() {
               </div>
               
               <div className="text-center">
-                <div className="text-3xl font-bold text-yellow-400 mb-2">{achievements.length}</div>
+                <div className="text-3xl font-bold text-yellow-400 mb-2">{achievements?.length || 0}</div>
                 <p className="text-gray-300">Total Achievements</p>
               </div>
             </div>
@@ -188,7 +207,7 @@ export default function MainNavigation() {
                   <h3 className="text-lg font-semibold text-white">Achievements</h3>
                 </div>
                 <div className="text-sm text-yellow-300 bg-yellow-500/20 px-2 py-1 rounded">
-                  {unlockedAchievements.length}/{achievements.length}
+                  {unlockedAchievementsCount}/{achievements?.length || 0}
                 </div>
               </div>
               <p className="text-gray-400 text-sm mb-3">
@@ -205,9 +224,11 @@ export default function MainNavigation() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {availableTreeIds.map(treeId => {
               const tree = skillTrees[treeId];
+              if (!tree) return null;
+              
               const points = skillPoints[treeId] || {};
-              const earnedPoints = Object.values(points).reduce((sum, pts) => sum + pts, 0);
-              const totalPossible = tree.skills.reduce((sum, skill) => sum + skill.max, 0);
+              const earnedPoints = Object.values(points).reduce((sum, pts) => sum + (pts || 0), 0);
+              const totalPossible = (tree.skills || []).reduce((sum, skill) => sum + (skill?.max || 0), 0);
               const treeProgress = totalPossible > 0 ? Math.round((earnedPoints / totalPossible) * 100) : 0;
 
               return (
@@ -217,10 +238,10 @@ export default function MainNavigation() {
                   className="bg-slate-800/40 backdrop-blur-sm rounded-lg border border-slate-700 p-6 cursor-pointer hover:bg-slate-700/40 transition-all duration-200"
                 >
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-white">{tree.name}</h3>
+                    <h3 className="text-lg font-semibold text-white">{tree.name || treeId}</h3>
                     <div className="text-sm text-gray-400">{treeProgress}%</div>
                   </div>
-                  <p className="text-gray-400 text-sm mb-4">{tree.description}</p>
+                  <p className="text-gray-400 text-sm mb-4">{tree.description || 'No description available'}</p>
                   
                   {/* Progress bar */}
                   <div className="w-full bg-slate-600 rounded-full h-2 mb-3">
@@ -232,7 +253,7 @@ export default function MainNavigation() {
                   
                   <div className="flex items-center justify-between text-xs text-gray-400">
                     <span>{earnedPoints} / {totalPossible} points</span>
-                    <span>{tree.skills.length} skills</span>
+                    <span>{(tree.skills || []).length} skills</span>
                   </div>
                 </div>
               );
