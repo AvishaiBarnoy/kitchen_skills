@@ -1,13 +1,14 @@
 import { useState, useCallback, useMemo } from "react";
 import { fullSkillsData, compactSkillData } from "../data/skills";
 import { computeUnlocks } from "../lib/utils";
+import { usePersistedSkillPoints } from "./useLocalStorage";
 
 export default function useSkillTree() {
   const [compactMode, setCompactMode] = useState(false);
-  const [points, setPoints] = useState({});
   const [highlightPaths, setHighlightPaths] = useState([]);
 
   const skills = compactMode ? compactSkillData : fullSkillsData;
+  const [points, setPoints, resetPoints] = usePersistedSkillPoints(skills);
 
   const canAddPoint = (id) => {
     const skill = skills.find((s) => s.id === id);
@@ -46,7 +47,7 @@ export default function useSkillTree() {
   };
 
   const resetTree = () => {
-    setPoints({});
+    resetPoints();
   };
 
   const toggleCompactMode = () => {
