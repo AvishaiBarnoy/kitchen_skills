@@ -1,12 +1,12 @@
 /** @jsxImportSource react */
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, Target, Clock, Users, Star, ChevronRight, Play } from 'lucide-react';
+import { BookOpen, Target, Clock, Users, Star, ChevronRight, Play, ArrowRight, CheckCircle } from 'lucide-react';
 import { pathColors } from '@/data/paths';
 import { skillTrees, getAvailableTreeIds } from '@/data/skillTrees';
 import useSkillTreeStore from '@/stores/skillTreeStore';
 
-const LearningPaths = () => {
-  const { skillPoints } = useSkillTreeStore();
+const LearningPaths = ({ onNavigateToSkills }) => {
+  const { skillPoints, setCurrentTree, setActiveLearningPath } = useSkillTreeStore();
 
   // Define structured learning paths
   const learningPaths = [
@@ -134,6 +134,55 @@ const LearningPaths = () => {
     }
   };
 
+  // Handle learning path selection
+  const handlePathStart = (path) => {
+    // Set the active learning path in the store
+    setActiveLearningPath(path.id);
+    
+    // Navigate to the first skill tree in the path
+    const firstSkillTree = path.skills[0]?.treeId;
+    if (firstSkillTree) {
+      setCurrentTree(firstSkillTree);
+    }
+    
+    // Navigate to skills view if callback provided
+    if (onNavigateToSkills) {
+      onNavigateToSkills();
+    }
+  };
+
+  // Get next suggested skills for a path
+  const getNextSkills = (path) => {
+    const suggestions = [];
+    for (const skillGroup of path.skills) {
+      const treePoints = skillPoints[skillGroup.treeId] || {};
+      for (const skillId of skillGroup.skillIds) {
+        const skillMaxPoints = getSkillMaxPoints(skillGroup.treeId, skillId);
+        const currentPoints = treePoints[skillId] || 0;
+        
+        if (currentPoints < skillMaxPoints) {
+          // Find the skill details
+          const tree = skillTrees[skillGroup.treeId];
+          const skill = tree?.fullData?.find(s => s && s.id === skillId);
+          if (skill) {
+            suggestions.push({
+              name: skill.name,
+              tree: skillGroup.treeId,
+              points: currentPoints,
+              maxPoints: skillMaxPoints,
+              description: skill.description
+            });
+          }
+        }
+        
+        // Only show first few incomplete skills
+        if (suggestions.length >= 3) break;
+      }
+      if (suggestions.length >= 3) break;
+    }
+    return suggestions;
+  };
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -158,6 +207,7 @@ const LearningPaths = () => {
           const progress = calculatePathProgress(path);
           const isStarted = progress > 0;
           const isCompleted = progress === 100;
+          const nextSkills = getNextSkills(path);
 
           return (
             <motion.div
@@ -236,24 +286,49 @@ const LearningPaths = () => {
                   {path.description}
                 </p>
 
-                {/* Skills Preview */}
+                {/* Skills Preview or Next Steps */}
                 <div className="space-y-2 mb-4">
-                  <h4 className="text-sm font-semibold text-gray-300">What you'll learn:</h4>
-                  {path.skills.slice(0, 2).map((skillGroup, idx) => (
-                    <div key={idx} className="flex items-center text-xs text-gray-400">
-                      <ChevronRight className="w-3 h-3 mr-1 text-blue-400" />
-                      {skillGroup.label}
-                    </div>
-                  ))}
-                  {path.skills.length > 2 && (
-                    <div className="text-xs text-gray-500">
-                      +{path.skills.length - 2} more skill groups...
-                    </div>
+                  {isStarted && !isCompleted && nextSkills.length > 0 ? (
+                    <>
+                      <h4 className="text-sm font-semibold text-blue-300">Next skills to practice:</h4>
+                      {nextSkills.slice(0, 2).map((skill, idx) => (
+                        <div key={idx} className="flex items-center justify-between text-xs">
+                          <div className="flex items-center text-gray-300">
+                            <Target className="w-3 h-3 mr-1 text-blue-400" />
+                            {skill.name}
+                          </div>
+                          <div className="text-gray-500">
+                            {skill.points}/{skill.maxPoints}
+                          </div>
+                        </div>
+                      ))}
+                      {nextSkills.length > 2 && (
+                        <div className="text-xs text-gray-500">
+                          +{nextSkills.length - 2} more skills...
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <h4 className="text-sm font-semibold text-gray-300">What you'll learn:</h4>
+                      {path.skills.slice(0, 2).map((skillGroup, idx) => (
+                        <div key={idx} className="flex items-center text-xs text-gray-400">
+                          <ChevronRight className="w-3 h-3 mr-1 text-blue-400" />
+                          {skillGroup.label}
+                        </div>
+                      ))}
+                      {path.skills.length > 2 && (
+                        <div className="text-xs text-gray-500">
+                          +{path.skills.length - 2} more skill groups...
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
 
                 {/* Action Button */}
                 <motion.button
+                  onClick={() => handlePathStart(path)}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   className={`
@@ -269,12 +344,12 @@ const LearningPaths = () => {
                 >
                   {isCompleted ? (
                     <>
-                      <Star className="w-4 h-4" />
+                      <CheckCircle className="w-4 h-4" />
                       <span>Completed!</span>
                     </>
                   ) : (
                     <>
-                      <Play className="w-4 h-4" />
+                      <ArrowRight className="w-4 h-4" />
                       <span>{isStarted ? 'Continue Path' : 'Start Learning'}</span>
                     </>
                   )}

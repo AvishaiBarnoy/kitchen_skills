@@ -1,7 +1,7 @@
 /** @jsxImportSource react */
 import { useMemo, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutGrid, Network, Eye, EyeOff } from "lucide-react";
+import { LayoutGrid, Network, Eye, EyeOff, X, BookOpen, Target } from "lucide-react";
 import useSkillTreeWithStore from "@/hooks/useSkillTreeStore";
 import useAchievements from "@/hooks/useAchievements";
 import useSkillTreeStore from "@/stores/skillTreeStore";
@@ -38,7 +38,7 @@ export default function SkillTree() {
   } = useSkillTreeWithStore();
 
   // Achievement system (still using the hook for logic, but store for state)
-  const { skillPoints } = useSkillTreeStore(); // Get all skill points across all trees
+  const { skillPoints, activeLearningPath, clearActiveLearningPath } = useSkillTreeStore(); // Get all skill points across all trees
   const {
     unlockedAchievements,
     newlyUnlocked,
@@ -101,6 +101,71 @@ export default function SkillTree() {
       }, 500);
     }
   };
+
+  // Learning path data (same as in LearningPaths.jsx)
+  const learningPaths = {
+    beginner: {
+      name: 'Beginner Cook',
+      skills: [
+        { treeId: 'knife-skills', skillIds: ['grip', 'knifeTypes', 'basic'], label: 'Basic knife handling' },
+        { treeId: 'knife-skills', skillIds: ['rockChop', 'julienne'], label: 'Simple cutting techniques' },
+        { treeId: 'knife-skills', skillIds: ['safety'], label: 'Kitchen safety' }
+      ]
+    },
+    vegetarian: {
+      name: 'Vegetarian Prep Master',
+      skills: [
+        { treeId: 'knife-skills', skillIds: ['julienne', 'brunoise', 'chiffonade'], label: 'Precision cuts' },
+        { treeId: 'knife-skills', skillIds: ['tournee', 'carving'], label: 'Advanced vegetable prep' }
+      ]
+    },
+    protein: {
+      name: 'Protein Mastery',
+      skills: [
+        { treeId: 'knife-skills', skillIds: ['boning', 'filleting', 'carving'], label: 'Protein breakdown' },
+        { treeId: 'knife-skills', skillIds: ['speed'], label: 'Efficiency techniques' }
+      ]
+    },
+    baking: {
+      name: 'Baking Fundamentals',
+      skills: [
+        { treeId: 'baking', skillIds: ['measuring', 'mixing'], label: 'Baking basics' },
+        { treeId: 'baking', skillIds: ['yeastDough', 'lamination'], label: 'Dough techniques' }
+      ]
+    },
+    sauces: {
+      name: 'Sauce Master',
+      skills: [
+        { treeId: 'sauces', skillIds: ['bechamel', 'veloute', 'hollandaise'], label: 'Mother sauces' },
+        { treeId: 'sauces', skillIds: ['emulsification', 'reduction'], label: 'Advanced techniques' }
+      ]
+    },
+    pastry: {
+      name: 'Pastry Arts',
+      skills: [
+        { treeId: 'knife-skills', skillIds: ['pastry'], label: 'Pastry knife skills' },
+        { treeId: 'baking', skillIds: ['decoration', 'pastryDough'], label: 'Decorative techniques' }
+      ]
+    }
+  };
+
+  // Get highlighted skills for current learning path
+  const getHighlightedSkills = () => {
+    if (!activeLearningPath || !learningPaths[activeLearningPath]) return [];
+    
+    const pathData = learningPaths[activeLearningPath];
+    const highlightedSkills = [];
+    
+    pathData.skills.forEach(skillGroup => {
+      if (skillGroup.treeId === currentTreeId) {
+        highlightedSkills.push(...skillGroup.skillIds);
+      }
+    });
+    
+    return highlightedSkills;
+  };
+
+  const highlightedSkills = getHighlightedSkills();
 
   // Enhanced canAddPoint function with prerequisites checking
   const canAddPoint = (skillId) => {
@@ -191,6 +256,54 @@ export default function SkillTree() {
         </div>
       </motion.div>
 
+      {/* Learning Path Banner */}
+      <AnimatePresence>
+        {activeLearningPath && learningPaths[activeLearningPath] && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+            className="bg-gradient-to-r from-blue-900/50 to-purple-900/50 rounded-xl p-4 border border-blue-500/30 mb-6"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-blue-500/20 rounded-lg">
+                  <BookOpen className="w-5 h-5 text-blue-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-white">
+                    Learning Path: {learningPaths[activeLearningPath].name}
+                  </h3>
+                  <p className="text-sm text-blue-300">
+                    {highlightedSkills.length > 0 
+                      ? `Focusing on ${highlightedSkills.length} skills in this tree`
+                      : 'Switch to the relevant skill tree to see highlighted skills'
+                    }
+                  </p>
+                </div>
+              </div>
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={clearActiveLearningPath}
+                className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                title="Exit learning path"
+              >
+                <X className="w-4 h-4" />
+              </motion.button>
+            </div>
+            
+            {highlightedSkills.length > 0 && (
+              <div className="mt-3 flex items-center text-sm text-blue-200">
+                <Target className="w-4 h-4 mr-2" />
+                <span>Highlighted skills in this view will help you progress in this learning path</span>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Path Legend (only show in grid view) */}
       <AnimatePresence>
         {viewMode === 'grid' && (
@@ -226,36 +339,38 @@ export default function SkillTree() {
               }
             `}
           >
-            {skills.map((skill, index) => {
-              if (!skill) return null;
-              const isUnlocked = unlocked[skill.id];
-              const isDimmed =
-                highlightPaths.length > 0 && !highlightPaths.includes(skill.path);
+                          {skills.map((skill, index) => {
+                if (!skill) return null;
+                const isUnlocked = unlocked[skill.id];
+                const isDimmed =
+                  highlightPaths.length > 0 && !highlightPaths.includes(skill.path);
+                const isHighlightedForLearningPath = highlightedSkills.includes(skill.id);
 
-              return (
-                <motion.div
-                  key={skill.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ 
-                    duration: 0.3, 
-                    delay: index * 0.05,
-                    type: "spring",
-                    stiffness: 300
-                  }}
-                >
-                  <SkillNode
-                    skill={skill}
-                    points={safePoints[skill.id] || 0}
-                    isUnlocked={isUnlocked}
-                    isDimmed={isDimmed}
-                    addPoint={addPoint}
-                    subtractPoint={subtractPoint}
-                    canAddPoint={canAddPoint}
-                  />
-                </motion.div>
-              );
-            })}
+                return (
+                  <motion.div
+                    key={skill.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ 
+                      duration: 0.3, 
+                      delay: index * 0.05,
+                      type: "spring",
+                      stiffness: 300
+                    }}
+                  >
+                    <SkillNode
+                      skill={skill}
+                      points={safePoints[skill.id] || 0}
+                      isUnlocked={isUnlocked}
+                      isDimmed={isDimmed}
+                      addPoint={addPoint}
+                      subtractPoint={subtractPoint}
+                      canAddPoint={canAddPoint}
+                      isHighlightedForLearningPath={isHighlightedForLearningPath}
+                    />
+                  </motion.div>
+                );
+              })}
           </motion.div>
         ) : (
           <motion.div
@@ -273,6 +388,7 @@ export default function SkillTree() {
               subtractPoint={subtractPoint}
               highlightPaths={highlightPaths}
               canAddPoint={canAddPoint}
+              highlightedSkills={highlightedSkills}
             />
           </motion.div>
         )}

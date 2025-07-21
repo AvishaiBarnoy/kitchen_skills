@@ -212,7 +212,7 @@ export default function MainNavigation() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <LearningPaths />
+          <LearningPaths onNavigateToSkills={() => setCurrentView('skillTree')} />
         </motion.div>
       </ResponsiveWrapper>
     );

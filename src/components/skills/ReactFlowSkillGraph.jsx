@@ -19,13 +19,28 @@ import { pathColors } from '@/data/paths';
 
 // Custom node wrapper for React Flow
 const SkillNodeWrapper = ({ data }) => {
+  const isHighlighted = data.isHighlightedForLearningPath;
+  
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
+      animate={{ 
+        opacity: 1, 
+        scale: 1
+      }}
       transition={{ duration: 0.3, delay: data.index * 0.05 }}
+      className={`relative ${isHighlighted ? 'z-10' : ''}`}
     >
-      <SkillNode {...data} />
+      {isHighlighted && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="absolute -inset-2 bg-gradient-to-r from-blue-500/30 to-purple-500/30 rounded-xl blur-sm"
+        />
+      )}
+      <div className="relative">
+        <SkillNode {...data} />
+      </div>
     </motion.div>
   );
 };
@@ -43,6 +58,7 @@ const ReactFlowSkillGraph = ({
   subtractPoint,
   highlightPaths,
   canAddPoint,
+  highlightedSkills = [],
 }) => {
   // Create layout using Dagre
   const createLayoutedElements = useCallback((skills) => {
@@ -99,6 +115,7 @@ const ReactFlowSkillGraph = ({
       
       const nodeWithPosition = dagreGraph.node(skill.id);
       const isDimmed = highlightPaths.length > 0 && !highlightPaths.includes(skill.path);
+      const isHighlightedForLearningPath = highlightedSkills.includes(skill.id);
       
       return {
         id: skill.id,
@@ -116,6 +133,7 @@ const ReactFlowSkillGraph = ({
           subtractPoint,
           canAddPoint,
           index,
+          isHighlightedForLearningPath,
         },
         style: {
           background: 'transparent',
@@ -129,7 +147,7 @@ const ReactFlowSkillGraph = ({
     }).filter(Boolean);
 
     return { nodes, edges };
-  }, [safePoints, unlocked, highlightPaths, addPoint, subtractPoint, canAddPoint]);
+  }, [safePoints, unlocked, highlightPaths, addPoint, subtractPoint, canAddPoint, highlightedSkills]);
 
   // Generate nodes and edges
   const { nodes: layoutedNodes, edges: layoutedEdges } = useMemo(

@@ -23,6 +23,7 @@ const SkillNode = React.memo(function SkillNode({
   addPoint,
   subtractPoint,
   canAddPoint,
+  isHighlightedForLearningPath = false,
 }) {
   if (!skill) return null;
 
@@ -57,7 +58,7 @@ const SkillNode = React.memo(function SkillNode({
       return {
         bg: "bg-gray-600",
         text: "text-gray-300",
-        border: "border-gray-500",
+        border: isHighlightedForLearningPath ? "border-blue-400 border-2" : "border-gray-500",
         ring: "focus:ring-gray-400"
       };
     }
@@ -75,7 +76,7 @@ const SkillNode = React.memo(function SkillNode({
       return {
         bg: `${pathColors[skill.path] || pathColors.default} bg-opacity-100`,
         text: "text-white",
-        border: "border-yellow-400 border-2",
+        border: isHighlightedForLearningPath ? "border-blue-400 border-2 shadow-lg shadow-blue-400/50" : "border-yellow-400 border-2",
         ring: "focus:ring-yellow-400"
       };
     }
@@ -83,7 +84,7 @@ const SkillNode = React.memo(function SkillNode({
     return {
       bg: `${pathColors[skill.path] || pathColors.default} bg-opacity-90`,
       text: "text-white",
-      border: "border-transparent",
+      border: isHighlightedForLearningPath ? "border-blue-400 border-2 shadow-lg shadow-blue-400/50" : "border-transparent",
       ring: "focus:ring-purple-400"
     };
   };
@@ -181,7 +182,18 @@ const SkillNode = React.memo(function SkillNode({
             </div>
 
             {/* Status indicator */}
-            <div className="absolute -top-1 -right-1">
+            <div className="absolute -top-1 -right-1 flex flex-col space-y-1">
+              {isHighlightedForLearningPath && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.1, type: "spring" }}
+                  className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center"
+                  title="Learning Path Skill"
+                >
+                  <span className="text-xs text-white">📚</span>
+                </motion.div>
+              )}
               {!isUnlocked && (
                 <motion.div
                   initial={{ scale: 0 }}
