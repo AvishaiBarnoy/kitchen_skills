@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { achievements, achievementTypes } from '../data/achievements';
+import { skillTrees, getSkillsForTree } from '../data/skillTrees';
 
 const STORAGE_KEY = 'knife-skill-achievements';
 
@@ -17,15 +18,43 @@ const loadStoredAchievements = () => {
   return new Set();
 };
 
-export default function useAchievements(skillPoints, skills) {
+export default function useAchievements(allSkillPoints, currentTreeSkills) {
+  // Get all skills from all trees for accurate achievement calculation
+  const getAllSkills = () => {
+    const allSkills = [];
+    Object.keys(skillTrees).forEach(treeId => {
+      const treeSkills = getSkillsForTree(treeId, false); // Always use full data for achievements
+      allSkills.push(...treeSkills);
+    });
+    return allSkills;
+  };
+
+  const allSkills = useMemo(() => getAllSkills(), []);
+  
+  // Calculate total skill points across ALL trees
+  const totalPoints = useMemo(() => {
+    let total = 0;
+    Object.values(allSkillPoints).forEach(treePoints => {
+      Object.values(treePoints).forEach(points => {
+        total += points;
+      });
+    });
+    return total;
+  }, [allSkillPoints]);
   // ✅ SOLUTION: Initialize with localStorage data immediately (synchronous)
   const [unlockedAchievements, setUnlockedAchievements] = useState(() => loadStoredAchievements());
   const [newlyUnlocked, setNewlyUnlocked] = useState([]);
 
-  // Calculate total skill points
-  const totalPoints = useMemo(() => {
-    return Object.values(skillPoints).reduce((sum, points) => sum + points, 0);
-  }, [skillPoints]);
+  // Helper function to get skill points for a specific skill across all trees
+  const getSkillPoints = (skillId) => {
+    for (const treeId of Object.keys(allSkillPoints)) {
+      const treePoints = allSkillPoints[treeId] || {};
+      if (treePoints[skillId] !== undefined) {
+        return treePoints[skillId];
+      }
+    }
+    return 0;
+  };
 
   // Check if a single achievement condition is met
   const checkAchievementCondition = (achievement) => {
@@ -35,19 +64,25 @@ export default function useAchievements(skillPoints, skills) {
         return totalPoints >= achievement.condition.totalPoints;
 
       case achievementTypes.SKILL_MASTERY:
-        return (skillPoints[achievement.condition.skillId] || 0) >= achievement.condition.points;
+        return getSkillPoints(achievement.condition.skillId) >= achievement.condition.points;
 
       case achievementTypes.PATH_COMPLETION:
-        // Check if all skills in a path are maxed out
-        const pathSkills = skills.filter(skill => skill.path === achievement.condition.path);
+        // Check if all skills in a path are maxed out across ALL trees
+        const pathSkills = allSkills.filter(skill => skill.path === achievement.condition.path);
+        
+        // Prevent false positives: if no skills exist for this path, return false
+        if (pathSkills.length === 0) {
+          return false;
+        }
+        
         return pathSkills.every(skill => 
-          (skillPoints[skill.id] || 0) >= skill.max
+          getSkillPoints(skill.id) >= skill.max
         );
 
       case achievementTypes.SKILL_COMBINATION:
         // Check if all required skills meet their point thresholds
         return achievement.condition.skills.every(requirement => 
-          (skillPoints[requirement.skillId] || 0) >= requirement.points
+          getSkillPoints(requirement.skillId) >= requirement.points
         );
 
       default:
@@ -86,7 +121,7 @@ export default function useAchievements(skillPoints, skills) {
     if (newUnlocks.length > 0) {
       setNewlyUnlocked(newUnlocks);
     }
-  }, [skillPoints, totalPoints, skills, unlockedAchievements]);
+  }, [allSkillPoints, totalPoints, allSkills, unlockedAchievements]);
 
   // Clear newly unlocked achievements (called after showing notification)
   const clearNewlyUnlocked = () => {
@@ -111,7 +146,7 @@ export default function useAchievements(skillPoints, skills) {
         };
 
       case achievementTypes.SKILL_MASTERY:
-        const currentPoints = skillPoints[achievement.condition.skillId] || 0;
+        const currentPoints = getSkillPoints(achievement.condition.skillId);
         const targetPoints = achievement.condition.points;
         return { 
           progress: Math.round((currentPoints / targetPoints) * 100), 
@@ -121,9 +156,12 @@ export default function useAchievements(skillPoints, skills) {
         };
 
       case achievementTypes.PATH_COMPLETION:
-        const pathSkills = skills.filter(skill => skill.path === achievement.condition.path);
+        const pathSkills = allSkills.filter(skill => skill.path === achievement.condition.path);
+        if (pathSkills.length === 0) {
+          return { progress: 0, current: 0, target: 1, isComplete: false };
+        }
         const maxedSkills = pathSkills.filter(skill => 
-          (skillPoints[skill.id] || 0) >= skill.max
+          getSkillPoints(skill.id) >= skill.max
         ).length;
         return { 
           progress: Math.round((maxedSkills / pathSkills.length) * 100), 
@@ -134,7 +172,7 @@ export default function useAchievements(skillPoints, skills) {
 
       case achievementTypes.SKILL_COMBINATION:
         const completedRequirements = achievement.condition.skills.filter(requirement => 
-          (skillPoints[requirement.skillId] || 0) >= requirement.points
+          getSkillPoints(requirement.skillId) >= requirement.points
         ).length;
         return { 
           progress: Math.round((completedRequirements / achievement.condition.skills.length) * 100), 

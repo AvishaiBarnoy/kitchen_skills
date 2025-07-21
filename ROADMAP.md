@@ -15,12 +15,12 @@ An interactive skill-tracking and learning platform for cooking techniques. Desi
 
 ---
 
-## 📚 Stage 2: Multi-Skill Trees and Learning Paths
+## 📚 Stage 2: Multi-Skill Trees and Learning Paths ✅ **COMPLETED**
 **Goal**: Support more than just knife skills and allow learning pathways.
 
-- [ ] Abstract skill tree logic to support different domains (e.g., baking, pastry, sauces).
-- [ ] Implement dropdown/menu for tree selection.
-- [ ] Enable custom paths (e.g., "Beginner Cook", "Vegetarian Prep", "Protein Mastery").
+- [x] Abstract skill tree logic to support different domains (e.g., baking, pastry, sauces).
+- [x] Implement dropdown/menu for tree selection.
+- [x] Enable custom paths (e.g., "Beginner Cook", "Vegetarian Prep", "Protein Mastery").
 
 ---
 

@@ -10,7 +10,7 @@ export default function useSkillTreeWithStore() {
   const store = useSkillTreeStore();
   
   // Compute derived values using useMemo for performance
-  const skills = useMemo(() => store.getCurrentSkills(), [store.compactMode]);
+  const skills = useMemo(() => store.getCurrentSkills(), [store.compactMode, store.currentTreeId]);
   const safePoints = useMemo(() => store.getSafePoints(), [skills, store.skillPoints, store.currentTreeId]);
   const unlocked = useMemo(() => store.getUnlockedSkills(), [safePoints, skills]);
   
@@ -33,5 +33,11 @@ export default function useSkillTreeWithStore() {
     // Additional store methods for future use
     setCurrentTree: store.setCurrentTree,
     currentTreeId: store.currentTreeId,
+    
+    // Learning path methods
+    activeLearningPath: store.activeLearningPath,
+    setActiveLearningPath: store.setActiveLearningPath,
+    clearActiveLearningPath: store.clearActiveLearningPath,
+    getLearningPathProgress: store.getLearningPathProgress,
   };
 }
