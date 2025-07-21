@@ -1,7 +1,9 @@
 /** @jsxImportSource react */
 import { useMemo, useState, useEffect } from "react";
-import useSkillTree from "../hooks/useSkillTree";
+import useSkillTreeWithStore from "../hooks/useSkillTreeStore";
 import useAchievements from "../hooks/useAchievements";
+import useSkillTreeStore from "../stores/skillTreeStore";
+import useAchievementStore from "../stores/achievementStore";
 import { allPaths } from "../data/paths";
 import { achievements } from "../data/achievements";
 import SkillNode from "./skills/SkillNode";
@@ -24,9 +26,9 @@ export default function SkillTree() {
     resetTree,
     highlightPaths,
     toggleHighlightPath,
-  } = useSkillTree();
+  } = useSkillTreeWithStore();
 
-  // Achievement system
+  // Achievement system (still using the hook for logic, but store for state)
   const {
     unlockedAchievements,
     newlyUnlocked,
@@ -35,42 +37,41 @@ export default function SkillTree() {
     stats,
   } = useAchievements(safePoints, skills);
 
-  // Modal and notification state
-  const [showAchievementsModal, setShowAchievementsModal] = useState(false);
-  const [currentNotification, setCurrentNotification] = useState(null);
-  const [notificationQueue, setNotificationQueue] = useState([]);
+  // Modal and notification state from store
+  const {
+    showAchievementsModal,
+    setShowAchievementsModal,
+    currentNotification,
+    setCurrentNotification,
+    notificationQueue,
+    setNotificationQueue,
+    addToNotificationQueue,
+    removeFromNotificationQueue,
+  } = useAchievementStore();
 
   // Handle newly unlocked achievements
   useEffect(() => {
     if (newlyUnlocked.length > 0) {
-      // Add new achievements to the queue (avoid duplicates)
-      setNotificationQueue(prev => {
-        const newQueue = [...prev];
-        newlyUnlocked.forEach(achievement => {
-          if (!newQueue.find(item => item.id === achievement.id)) {
-            newQueue.push(achievement);
-          }
-        });
-        return newQueue;
+      // Add new achievements to the queue using store method
+      newlyUnlocked.forEach(achievement => {
+        addToNotificationQueue(achievement);
       });
       
       // Clear the newly unlocked from the hook
       clearNewlyUnlocked();
     }
-  }, [newlyUnlocked, clearNewlyUnlocked]);
+  }, [newlyUnlocked, clearNewlyUnlocked, addToNotificationQueue]);
 
   // Show notifications from the queue
   useEffect(() => {
     if (notificationQueue.length > 0 && !currentNotification) {
       setCurrentNotification(notificationQueue[0]);
     }
-  }, [notificationQueue, currentNotification]);
+  }, [notificationQueue, currentNotification, setCurrentNotification]);
 
   const handleNotificationDismiss = () => {
-    setCurrentNotification(null);
-    
-    // Remove the current notification from the queue
-    setNotificationQueue(prev => prev.slice(1));
+    // Remove from queue and clear current using store method
+    removeFromNotificationQueue();
     
     // Show next notification after a brief delay if there are more
     if (notificationQueue.length > 1) {
