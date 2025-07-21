@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ChefHat, Trophy, BookOpen, Target, Play, User } from 'lucide-react';
 import SkillGraph from './skillGraph';
 import Profile from './Profile';
+import ResponsiveWrapper from './layout/ResponsiveWrapper';
 import { skillTrees, getAvailableTreeIds } from '../data/skillTrees';
 import { achievements } from '../data/achievements';
 import useSkillTreeStore from '../stores/skillTreeStore';
@@ -51,67 +53,105 @@ export default function MainNavigation() {
 
   if (currentView === 'skillTree') {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-purple-950 via-slate-900 to-black text-gray-200">
-        <nav className="bg-slate-800/50 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-50">
+      <ResponsiveWrapper className="min-h-screen bg-gradient-to-b from-purple-950 via-slate-900 to-black text-gray-200">
+        <motion.nav 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-slate-800/50 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-50"
+        >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
-              <button
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setCurrentView('home')}
                 className="flex items-center space-x-2 text-purple-300 hover:text-purple-100 transition-colors"
               >
                 <ChefHat className="h-6 w-6" />
                 <span className="font-semibold">Kitchen Skills</span>
-              </button>
+              </motion.button>
               <div className="flex items-center space-x-4">
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => setCurrentView('profile')}
                   className="flex items-center space-x-1 text-gray-400 hover:text-purple-300 transition-colors"
                 >
                   <User className="h-4 w-4" />
                   <span className="text-sm">Profile</span>
-                </button>
-                <div className="text-sm text-gray-400">
+                </motion.button>
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-sm text-gray-400"
+                >
                   Progress: {overallProgressPercentage}%
-                </div>
+                </motion.div>
               </div>
             </div>
           </div>
-        </nav>
-        <SkillGraph />
-      </div>
+        </motion.nav>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <SkillGraph />
+        </motion.div>
+      </ResponsiveWrapper>
     );
   }
 
   if (currentView === 'profile') {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-purple-950 via-slate-900 to-black text-gray-200">
-        <nav className="bg-slate-800/50 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-50">
+      <ResponsiveWrapper className="min-h-screen bg-gradient-to-b from-purple-950 via-slate-900 to-black text-gray-200">
+        <motion.nav 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-slate-800/50 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-50"
+        >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
-              <button
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setCurrentView('home')}
                 className="flex items-center space-x-2 text-purple-300 hover:text-purple-100 transition-colors"
               >
                 <ChefHat className="h-6 w-6" />
                 <span className="font-semibold">Kitchen Skills</span>
-              </button>
+              </motion.button>
               <div className="flex items-center space-x-4">
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => setCurrentView('skillTree')}
                   className="flex items-center space-x-1 text-gray-400 hover:text-purple-300 transition-colors"
                 >
                   <Target className="h-4 w-4" />
                   <span className="text-sm">Skills</span>
-                </button>
-                <div className="text-sm text-gray-400">
+                </motion.button>
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-sm text-gray-400"
+                >
                   Progress: {overallProgressPercentage}%
-                </div>
+                </motion.div>
               </div>
             </div>
           </div>
-        </nav>
-        <Profile />
-      </div>
+        </motion.nav>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <Profile />
+        </motion.div>
+      </ResponsiveWrapper>
     );
   }
 
