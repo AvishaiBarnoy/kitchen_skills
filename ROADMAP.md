@@ -4,14 +4,14 @@ An interactive skill-tracking and learning platform for cooking techniques. Desi
 
 ---
 
-## 📌 Stage 1: Core Stabilization & Refactoring
+## 📌 Stage 1: Core Stabilization & Refactoring ✅ **COMPLETED**
 **Goal**: Improve maintainability and deepen understanding of React and modern frontend practices.
 
 - [x] Modularize components (hooks, UI, logic).
 - [x] Implement graph-based prerequisite handling.
 - [x] Add unit tests for core logic (`useSkillTree`, `computeUnlocks`, etc).
 - [x] Introduce global state manager (e.g., Zustand or Redux) if needed.
-- [ ] Clean up styles and remove redundant props and state.
+- [x] Clean up styles and remove redundant props and state.
 
 ---
 
