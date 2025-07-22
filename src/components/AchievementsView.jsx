@@ -1,10 +1,11 @@
 /** @jsxImportSource react */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Star, Lock, Filter, Search, Award, Target, Zap } from 'lucide-react';
 import { achievements } from '@/data/achievements';
 import useSkillTreeStore from '@/stores/skillTreeStore';
 import useAchievements from '@/hooks/useAchievements';
+import useAchievementStore from '@/stores/achievementStore';
 
 const AchievementsView = () => {
   const { skillPoints } = useSkillTreeStore();
@@ -16,15 +17,44 @@ const AchievementsView = () => {
     return { ...acc, ...treePoints };
   }, {});
 
-  const { unlockedAchievements, getAchievementProgress } = useAchievements(skillPoints, []);
+  const { 
+    unlockedAchievements, 
+    getAchievementProgress, 
+    newlyUnlocked, 
+    clearNewlyUnlocked 
+  } = useAchievements(skillPoints, []);
+
+  // Achievement store for UI state and persistence
+  const { 
+    unlockedAchievements: storeUnlockedAchievements,
+    unlockAchievement,
+    addToNotificationQueue 
+  } = useAchievementStore();
+
+  // Sync newly unlocked achievements from hook to store
+  useEffect(() => {
+    if (newlyUnlocked.length > 0) {
+      newlyUnlocked.forEach(achievement => {
+        unlockAchievement(achievement.id);
+        addToNotificationQueue(achievement);
+      });
+      clearNewlyUnlocked();
+    }
+  }, [newlyUnlocked, unlockAchievement, addToNotificationQueue, clearNewlyUnlocked]);
+
+  // Combine achievements from both systems (hook is the source of truth for logic, store for persistence)
+  const combinedUnlockedAchievements = new Set([
+    ...unlockedAchievements,
+    ...Object.keys(storeUnlockedAchievements)
+  ]);
 
   // Filter achievements
   const filteredAchievements = achievements.filter(achievement => {
     const matchesSearch = achievement.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          achievement.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = filterType === 'all' || 
-                       (filterType === 'unlocked' && unlockedAchievements[achievement.id]) ||
-                       (filterType === 'locked' && !unlockedAchievements[achievement.id]) ||
+                       (filterType === 'unlocked' && combinedUnlockedAchievements.has(achievement.id)) ||
+                       (filterType === 'locked' && !combinedUnlockedAchievements.has(achievement.id)) ||
                        (filterType === achievement.type);
     return matchesSearch && matchesType;
   });
@@ -39,7 +69,7 @@ const AchievementsView = () => {
 
   // Calculate statistics
   const totalAchievements = achievements.length;
-  const unlockedCount = Object.keys(unlockedAchievements).length;
+  const unlockedCount = combinedUnlockedAchievements.size;
   const progressPercentage = Math.round((unlockedCount / totalAchievements) * 100);
 
   const getRarityColor = (rarity) => {
@@ -221,8 +251,8 @@ const AchievementsView = () => {
               {/* Achievements Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {typeAchievements.map((achievement, index) => {
-                  const isUnlocked = !!unlockedAchievements[achievement.id];
-                  const progress = getAchievementProgress(achievement.id);
+                  const isUnlocked = combinedUnlockedAchievements.has(achievement.id);
+                  const progress = getAchievementProgress(achievement);
 
                   return (
                     <motion.div
@@ -271,17 +301,17 @@ const AchievementsView = () => {
                           {/* Progress */}
                           {!isUnlocked && progress && (
                             <span className="text-xs text-gray-400">
-                              {Math.round(progress * 100)}%
+                              {progress.progress}%
                             </span>
                           )}
                         </div>
 
                         {/* Progress Bar for locked achievements */}
-                        {!isUnlocked && progress > 0 && (
+                        {!isUnlocked && progress && progress.progress > 0 && (
                           <div className="w-full bg-gray-700 rounded-full h-1.5 mt-2">
                             <div 
                               className="bg-yellow-400 h-1.5 rounded-full transition-all duration-300"
-                              style={{ width: `${progress * 100}%` }}
+                              style={{ width: `${progress.progress}%` }}
                             ></div>
                           </div>
                         )}
