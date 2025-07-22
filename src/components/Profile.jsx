@@ -1,4 +1,4 @@
-import { User, Target, Trophy, BookOpen, TrendingUp, Star, Download, Upload } from 'lucide-react';
+import { User, Target, Trophy, BookOpen, TrendingUp, Star, Download, Upload, ArrowRight, CheckCircle, Zap, Clock, ChefHat, Award } from 'lucide-react';
 import useSkillTreeStore from '../stores/skillTreeStore';
 import useAchievementStore from '../stores/achievementStore';
 import { skillTrees, getAvailableTreeIds } from '../data/skillTrees';
@@ -57,53 +57,215 @@ export default function Profile() {
     ? Math.round((unlockedAchievementsList.length / totalAchievements) * 100) 
     : 0;
 
-  // Suggest next steps
+  // Enhanced intelligent next steps suggestions
   const getNextSteps = () => {
     const suggestions = [];
     
-    // Find trees with low progress
-    const lowProgressTrees = stats.trees.filter(tree => tree.progress < 50);
-    if (lowProgressTrees.length > 0) {
-      suggestions.push({
-        type: 'skill',
-        title: `Continue ${lowProgressTrees[0].name}`,
-        description: `You're ${lowProgressTrees[0].progress}% complete. Keep building your foundation!`,
-        action: () => setCurrentTree(lowProgressTrees[0].id)
-      });
-    }
-
-    // Find trees that are nearly complete
+    // Priority 1: Nearly complete skills (80-95% complete)
     const nearlyCompleteTrees = stats.trees.filter(tree => tree.progress >= 80 && tree.progress < 100);
     if (nearlyCompleteTrees.length > 0) {
+      const tree = nearlyCompleteTrees[0];
+      suggestions.push({
+        type: 'complete',
+        priority: 'high',
+        title: `🎯 Finish ${tree.name}`,
+        description: `You're ${tree.progress}% complete! Just ${100 - tree.progress}% left to master this tree.`,
+        action: () => setCurrentTree(tree.id),
+        timeEstimate: '5-10 minutes',
+        impact: 'High - Complete mastery unlock',
+        color: 'green',
+        icon: CheckCircle
+      });
+    }
+
+    // Priority 2: Find specific next unlockable skills
+    const getNextUnlockableSkills = () => {
+      const unlockableSkills = [];
+      stats.trees.forEach(tree => {
+        const skillData = skillTrees[tree.id];
+        if (skillData && skillData.fullData) {
+          const points = skillPoints[tree.id] || {};
+          skillData.fullData.forEach(skill => {
+            if (!skill) return;
+            const currentPoints = points[skill.id] || 0;
+            
+            // Check if skill is not maxed and prerequisites are met
+            if (currentPoints < skill.max) {
+              const prerequisitesMet = !skill.prereq || skill.prereq.every(prereq => {
+                const prereqPoints = points[prereq.id] || 0;
+                return prereqPoints >= prereq.points;
+              });
+              
+              if (prerequisitesMet) {
+                unlockableSkills.push({
+                  skill,
+                  tree: tree.name,
+                  treeId: tree.id,
+                  currentPoints,
+                  progress: currentPoints / skill.max
+                });
+              }
+            }
+          });
+        }
+      });
+      return unlockableSkills.sort((a, b) => b.progress - a.progress); // Sort by closest to completion
+    };
+
+    const nextSkills = getNextUnlockableSkills();
+    if (nextSkills.length > 0) {
+      const skill = nextSkills[0];
+      suggestions.push({
+        type: 'skill',
+        priority: 'high',
+        title: `⚡ Practice "${skill.skill.name}"`,
+        description: `${skill.currentPoints}/${skill.skill.max} points in ${skill.tree}. ${skill.skill.description}`,
+        action: () => setCurrentTree(skill.treeId),
+        timeEstimate: '3-5 minutes',
+        impact: 'Medium - Skill advancement',
+        color: 'blue',
+        icon: Target
+      });
+    }
+
+    // Priority 3: Learning path suggestions
+    const learningPathSuggestions = () => {
+      if (stats.totalEarned < 10) {
+        return {
+          type: 'path',
+          priority: 'high',
+          title: `🍳 Start "Beginner Cook" Path`,
+          description: 'Perfect starting point with essential knife skills and kitchen safety.',
+          action: () => {}, // Will be enhanced to navigate to learning paths
+          timeEstimate: '2-4 weeks',
+          impact: 'High - Structured foundation',
+          color: 'purple',
+          icon: BookOpen
+        };
+      } else if (stats.completedSkills >= 5) {
+        return {
+          type: 'path',
+          priority: 'medium',
+          title: `🥗 Try "Vegetarian Prep Master"`,
+          description: 'Build on your knife skills with precision vegetable techniques.',
+          action: () => {},
+          timeEstimate: '3-5 weeks',
+          impact: 'Medium - Skill specialization',
+          color: 'green',
+          icon: ChefHat
+        };
+      }
+      return null;
+    };
+
+    const pathSuggestion = learningPathSuggestions();
+    if (pathSuggestion) {
+      suggestions.push(pathSuggestion);
+    }
+
+    // Priority 4: Achievement unlock opportunities
+    const getCloseAchievements = () => {
+      const closeAchievements = [];
+      achievements.forEach(achievement => {
+        if (unlockedAchievements[achievement.id]) return; // Skip already unlocked
+        
+        // Check progress towards achievement
+        if (achievement.condition.totalPoints) {
+          const progress = stats.totalEarned / achievement.condition.totalPoints;
+          if (progress > 0.7 && progress < 1) {
+            closeAchievements.push({
+              achievement,
+              progress,
+              pointsNeeded: achievement.condition.totalPoints - stats.totalEarned
+            });
+          }
+        }
+        
+        if (achievement.condition.skillId) {
+          const allPoints = Object.values(skillPoints).reduce((acc, treePoints) => ({ ...acc, ...treePoints }), {});
+          const currentPoints = allPoints[achievement.condition.skillId] || 0;
+          const progress = currentPoints / achievement.condition.points;
+          if (progress > 0.5 && progress < 1) {
+            closeAchievements.push({
+              achievement,
+              progress,
+              pointsNeeded: achievement.condition.points - currentPoints
+            });
+          }
+        }
+      });
+      
+      return closeAchievements.sort((a, b) => b.progress - a.progress);
+    };
+
+    const closeAchievements = getCloseAchievements();
+    if (closeAchievements.length > 0 && suggestions.length < 4) {
+      const achievement = closeAchievements[0];
       suggestions.push({
         type: 'achievement',
-        title: `Complete ${nearlyCompleteTrees[0].name}`,
-        description: `You're so close! Only ${100 - nearlyCompleteTrees[0].progress}% left to master this tree.`,
-        action: () => setCurrentTree(nearlyCompleteTrees[0].id)
+        priority: 'medium',
+        title: `🏆 Unlock "${achievement.achievement.name}"`,
+        description: `${Math.round(achievement.progress * 100)}% complete. ${achievement.achievement.description}`,
+        action: () => {},
+        timeEstimate: '2-8 minutes',
+        impact: 'Medium - Recognition badge',
+        color: 'yellow',
+        icon: Trophy
       });
     }
 
-    // Achievement suggestions
-    if (unlockedAchievementsList.length < totalAchievements / 2) {
-      suggestions.push({
-        type: 'trophy',
-        title: 'Unlock More Achievements',
-        description: 'Focus on completing skills to unlock recognition badges.',
-        action: () => {}
-      });
-    }
-
-    // If no specific suggestions, encourage exploration
-    if (suggestions.length === 0) {
+    // Priority 5: Exploration suggestions
+    const unexploredTrees = stats.trees.filter(tree => tree.progress < 10);
+    if (unexploredTrees.length > 0 && suggestions.length < 4) {
+      const tree = unexploredTrees[0];
       suggestions.push({
         type: 'explore',
-        title: 'Explore New Skills',
-        description: 'Try a different skill tree to expand your culinary expertise.',
-        action: () => {}
+        priority: 'low',
+        title: `🔍 Explore ${tree.name}`,
+        description: `New skill tree with ${tree.skillCount} skills to discover.`,
+        action: () => setCurrentTree(tree.id),
+        timeEstimate: '10-15 minutes',
+        impact: 'Low - Skill discovery',
+        color: 'indigo',
+        icon: Star
       });
     }
 
-    return suggestions;
+    // Priority 6: Consistency suggestions
+    if (stats.totalEarned > 0 && suggestions.length < 4) {
+      suggestions.push({
+        type: 'consistency',
+        priority: 'low',
+        title: `⏰ Daily Practice Session`,
+        description: 'Dedicate 5-10 minutes daily to maintain skill sharpness.',
+        action: () => {},
+        timeEstimate: '5-10 minutes',
+        impact: 'Medium - Skill retention',
+        color: 'gray',
+        icon: Clock
+      });
+    }
+
+    // Ensure we have at least 3-4 suggestions
+    if (suggestions.length === 0) {
+      suggestions.push({
+        type: 'start',
+        priority: 'high',
+        title: `🚀 Begin Your Culinary Journey`,
+        description: 'Start with basic knife skills to build your foundation.',
+        action: () => setCurrentTree('knife-skills'),
+        timeEstimate: '5 minutes',
+        impact: 'High - Foundation building',
+        color: 'blue',
+        icon: ChefHat
+      });
+    }
+
+    // Limit to top 4 suggestions and sort by priority
+    const priorityOrder = { high: 3, medium: 2, low: 1 };
+    return suggestions
+      .sort((a, b) => priorityOrder[b.priority] - priorityOrder[a.priority])
+      .slice(0, 4);
   };
 
   const nextSteps = getNextSteps();
@@ -221,39 +383,128 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Suggested Next Steps */}
+      {/* Enhanced Suggested Next Steps */}
       <div className="bg-slate-800/40 backdrop-blur-sm rounded-lg border border-slate-700 p-6">
-        <h2 className="text-xl font-semibold mb-6 flex items-center text-white">
-          <TrendingUp className="h-5 w-5 mr-2 text-green-400" />
-          Suggested Next Steps
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold flex items-center text-white">
+            <TrendingUp className="h-5 w-5 mr-2 text-green-400" />
+            Suggested Next Steps
+          </h2>
+          <div className="text-sm text-gray-400">
+            Personalized recommendations based on your progress
+          </div>
+        </div>
+        
+        <div className="space-y-4">
           {nextSteps.map((step, index) => {
-            const IconComponent = {
-              skill: BookOpen,
-              achievement: Trophy,
-              trophy: Star,
-              explore: Target
-            }[step.type] || Target;
+            const IconComponent = step.icon || Target;
+            
+            // Color mapping for different types
+            const colorClasses = {
+              green: {
+                bg: 'bg-green-500/10 border-green-500/30',
+                icon: 'bg-green-500/20 text-green-400',
+                priority: 'text-green-400',
+                button: 'bg-green-600 hover:bg-green-700'
+              },
+              blue: {
+                bg: 'bg-blue-500/10 border-blue-500/30',
+                icon: 'bg-blue-500/20 text-blue-400',
+                priority: 'text-blue-400',
+                button: 'bg-blue-600 hover:bg-blue-700'
+              },
+              purple: {
+                bg: 'bg-purple-500/10 border-purple-500/30',
+                icon: 'bg-purple-500/20 text-purple-400',
+                priority: 'text-purple-400',
+                button: 'bg-purple-600 hover:bg-purple-700'
+              },
+              yellow: {
+                bg: 'bg-yellow-500/10 border-yellow-500/30',
+                icon: 'bg-yellow-500/20 text-yellow-400',
+                priority: 'text-yellow-400',
+                button: 'bg-yellow-600 hover:bg-yellow-700'
+              },
+              indigo: {
+                bg: 'bg-indigo-500/10 border-indigo-500/30',
+                icon: 'bg-indigo-500/20 text-indigo-400',
+                priority: 'text-indigo-400',
+                button: 'bg-indigo-600 hover:bg-indigo-700'
+              },
+              gray: {
+                bg: 'bg-gray-500/10 border-gray-500/30',
+                icon: 'bg-gray-500/20 text-gray-400',
+                priority: 'text-gray-400',
+                button: 'bg-gray-600 hover:bg-gray-700'
+              }
+            };
+            
+            const colors = colorClasses[step.color] || colorClasses.blue;
             
             return (
               <div 
                 key={index}
-                onClick={step.action}
-                className="bg-slate-700/30 rounded-lg p-4 border border-slate-600 hover:bg-slate-600/30 transition-colors cursor-pointer"
+                className={`rounded-xl p-5 border transition-all duration-200 hover:shadow-lg ${colors.bg}`}
               >
-                <div className="flex items-start space-x-3">
-                  <div className="p-2 bg-green-500/20 rounded-lg">
-                    <IconComponent className="h-5 w-5 text-green-400" />
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start space-x-4 flex-1">
+                    <div className={`p-3 rounded-xl ${colors.icon}`}>
+                      <IconComponent className="h-6 w-6" />
+                    </div>
+                    
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="font-bold text-white text-lg">{step.title}</h3>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium bg-white/10 ${colors.priority}`}>
+                          {step.priority.toUpperCase()}
+                        </span>
+                      </div>
+                      
+                      <p className="text-gray-300 mb-3 leading-relaxed">
+                        {step.description}
+                      </p>
+                      
+                      <div className="flex items-center gap-4 text-sm text-gray-400 mb-4">
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-4 w-4" />
+                          <span>{step.timeEstimate}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Zap className="h-4 w-4" />
+                          <span>{step.impact}</span>
+                        </div>
+                      </div>
+                      
+                      <button
+                        onClick={step.action}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-white font-medium transition-colors ${colors.button}`}
+                      >
+                        <span>Take Action</span>
+                        <ArrowRight className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-white mb-1">{step.title}</h3>
-                    <p className="text-sm text-gray-400">{step.description}</p>
+                  
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-white">
+                      #{index + 1}
+                    </div>
                   </div>
                 </div>
               </div>
             );
           })}
+        </div>
+        
+        {/* Summary footer */}
+        <div className="mt-6 pt-4 border-t border-slate-600">
+          <div className="flex items-center justify-between text-sm text-gray-400">
+            <span>Suggestions update based on your progress and activity</span>
+            <div className="flex items-center gap-2">
+              <Award className="h-4 w-4" />
+              <span>Complete suggestions to accelerate your learning</span>
+            </div>
+          </div>
         </div>
       </div>
 
