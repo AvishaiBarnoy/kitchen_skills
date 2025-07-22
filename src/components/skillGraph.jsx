@@ -23,6 +23,8 @@ export default function SkillTree() {
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'flow'
   const [isResponsiveMode, setIsResponsiveMode] = useState(false);
 
+
+
   const {
     compactMode,
     toggleCompactMode,
@@ -36,6 +38,19 @@ export default function SkillTree() {
     toggleHighlightPath,
     currentTreeId,
   } = useSkillTreeWithStore();
+
+  // Fallback to direct data access if store returns empty (ensures skills always display)
+  const fallbackSkills = useMemo(() => {
+    const treeInfo = getTreeInfo(currentTreeId);
+    if (!treeInfo) return [];
+    return compactMode ? (treeInfo.compactData || []) : (treeInfo.fullData || []);
+  }, [currentTreeId, compactMode]);
+  
+  const effectiveSkills = (skills && skills.length > 0) ? skills : fallbackSkills;
+  const effectiveSafePoints = safePoints || {};
+  const effectiveUnlocked = unlocked || {};
+
+
 
   // Achievement system (still using the hook for logic, but store for state)
   const { skillPoints, activeLearningPath, clearActiveLearningPath } = useSkillTreeStore(); // Get all skill points across all trees
@@ -338,39 +353,59 @@ export default function SkillTree() {
                 : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6'
               }
             `}
-          >
-                          {skills.map((skill, index) => {
-                if (!skill) return null;
-                const isUnlocked = unlocked[skill.id];
-                const isDimmed =
-                  highlightPaths.length > 0 && !highlightPaths.includes(skill.path);
-                const isHighlightedForLearningPath = highlightedSkills.includes(skill.id);
+                      >
+            {/* Fallback message (should rarely appear now) */}
+            {(!effectiveSkills || effectiveSkills.length === 0) && (
+              <div className="col-span-full text-center p-8 bg-yellow-900/20 rounded-xl border border-yellow-500/30">
+                <h3 className="text-xl font-semibold text-yellow-400 mb-2">No Skills Available</h3>
+                <p className="text-yellow-300 mb-4">
+                  No skills found for tree: {currentTreeId}
+                </p>
+                <button 
+                  onClick={() => {
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    window.location.reload();
+                  }}
+                  className="mt-4 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+                >
+                  Reset Application
+                </button>
+              </div>
+            )}
+            
+            {effectiveSkills && effectiveSkills.length > 0 && effectiveSkills.map((skill, index) => {
+              if (!skill) return null;
+              const isUnlocked = effectiveUnlocked[skill.id] || false;
+              const isDimmed =
+                highlightPaths.length > 0 && !highlightPaths.includes(skill.path);
+              const isHighlightedForLearningPath = highlightedSkills.includes(skill.id);
 
-                return (
-                  <motion.div
-                    key={skill.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ 
-                      duration: 0.3, 
-                      delay: index * 0.05,
-                      type: "spring",
-                      stiffness: 300
-                    }}
-                  >
-                    <SkillNode
-                      skill={skill}
-                      points={safePoints[skill.id] || 0}
-                      isUnlocked={isUnlocked}
-                      isDimmed={isDimmed}
-                      addPoint={addPoint}
-                      subtractPoint={subtractPoint}
-                      canAddPoint={canAddPoint}
-                      isHighlightedForLearningPath={isHighlightedForLearningPath}
-                    />
-                  </motion.div>
-                );
-              })}
+              return (
+                <motion.div
+                  key={skill.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ 
+                    duration: 0.3, 
+                    delay: index * 0.05,
+                    type: "spring",
+                    stiffness: 300
+                  }}
+                >
+                  <SkillNode
+                    skill={skill}
+                    points={effectiveSafePoints[skill.id] || 0}
+                    isUnlocked={isUnlocked}
+                    isDimmed={isDimmed}
+                    addPoint={addPoint}
+                    subtractPoint={subtractPoint}
+                    canAddPoint={canAddPoint}
+                    isHighlightedForLearningPath={isHighlightedForLearningPath}
+                  />
+                </motion.div>
+              );
+            })}
           </motion.div>
         ) : (
           <motion.div
@@ -381,9 +416,9 @@ export default function SkillTree() {
             transition={{ duration: 0.3 }}
           >
             <ReactFlowSkillGraph
-              skills={skills}
-              safePoints={safePoints}
-              unlocked={unlocked}
+              skills={effectiveSkills}
+              safePoints={effectiveSafePoints}
+              unlocked={effectiveUnlocked}
               addPoint={addPoint}
               subtractPoint={subtractPoint}
               highlightPaths={highlightPaths}

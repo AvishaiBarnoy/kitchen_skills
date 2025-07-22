@@ -27,19 +27,19 @@ const useSkillTreeStore = create(
       
       // Getters
       getCurrentSkills: () => {
-        const { compactMode, currentTreeId } = get();
-        return getSkillsForTree(currentTreeId, compactMode);
+        const state = get();
+        return getSkillsForTree(state.currentTreeId, state.compactMode);
       },
       
       getCurrentPoints: () => {
-        const { currentTreeId, skillPoints } = get();
-        return skillPoints[currentTreeId] || {};
+        const state = get();
+        return state.skillPoints[state.currentTreeId] || {};
       },
       
       getSafePoints: () => {
-        const { getCurrentSkills, getCurrentPoints } = get();
-        const skills = getCurrentSkills();
-        const points = getCurrentPoints();
+        const state = get();
+        const skills = getSkillsForTree(state.currentTreeId, state.compactMode);
+        const points = state.skillPoints[state.currentTreeId] || {};
         const result = {};
         for (const skill of skills) {
           result[skill.id] = points[skill.id] ?? 0;
@@ -48,10 +48,14 @@ const useSkillTreeStore = create(
       },
       
       getUnlockedSkills: () => {
-        const { getCurrentSkills, getSafePoints } = get();
-        const skills = getCurrentSkills();
-        const points = getSafePoints();
-        return computeUnlocks(skills, points);
+        const state = get();
+        const skills = getSkillsForTree(state.currentTreeId, state.compactMode);
+        const points = state.skillPoints[state.currentTreeId] || {};
+        const safePoints = {};
+        for (const skill of skills) {
+          safePoints[skill.id] = points[skill.id] ?? 0;
+        }
+        return computeUnlocks(skills, safePoints);
       },
       
       // Actions
@@ -68,9 +72,9 @@ const useSkillTreeStore = create(
       })),
       
       canAddPoint: (skillId) => {
-        const { getCurrentSkills, getCurrentPoints } = get();
-        const skills = getCurrentSkills();
-        const points = getCurrentPoints();
+        const state = get();
+        const skills = getSkillsForTree(state.currentTreeId, state.compactMode);
+        const points = state.skillPoints[state.currentTreeId] || {};
         
         const skill = skills.find((s) => s.id === skillId);
         if (!skill) return false;
@@ -85,10 +89,10 @@ const useSkillTreeStore = create(
       },
       
       addPoint: (skillId) => set((state) => {
-        const { getCurrentSkills, canAddPoint } = get();
-        const skills = getCurrentSkills();
+        const store = get();
+        if (!store.canAddPoint(skillId)) return state;
         
-        if (!canAddPoint(skillId)) return state;
+        const skills = getSkillsForTree(state.currentTreeId, state.compactMode);
         
         const skill = skills.find((s) => s.id === skillId);
         const max = skill?.max ?? Infinity;
